@@ -183,8 +183,8 @@ export function CategoriesScreen({
           {/* Category Tabs */}
           <Tabs
             value={selectedTab}
-            onValueChange={(value) =>
-              setSelectedTab(value as "expense" | "income")
+            onValueChange={(value: "expense" | "income") =>
+              setSelectedTab(value)
             }
           >
             <TabsList className="grid w-full max-w-md grid-cols-2 h-12">

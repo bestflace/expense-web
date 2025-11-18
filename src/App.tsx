@@ -17,9 +17,12 @@ import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 
+import { CompleteProfileScreen } from "./components/CompleteProfileScreen";
+
 export type Screen =
   | "onboarding"
   | "auth"
+  | "complete-profile"
   | "home"
   | "add-transaction"
   | "categories"
@@ -191,10 +194,10 @@ export default function App() {
   });
 
   const [user, setUser] = useState<User>({
-    fullName: "Người dùng",
-    email: "user@example.com",
-    phoneNumber: "+84 123 456 789",
-    bio: "Quản lý tài chính cá nhân",
+    fullName: "Ngọc Châu",
+    email: "",
+    phoneNumber: "",
+    bio: "",
   });
 
   const navigate = (screen: Screen) => {
@@ -581,12 +584,52 @@ export default function App() {
           <AuthScreen
             mode={authMode}
             onModeChange={setAuthMode}
-            onSuccess={() => navigate("home")}
+            onSignInSuccess={(userData) => {
+              // sau này thay bằng data trả từ backend
+              setUser((prev) => ({
+                ...prev,
+                email: userData.email,
+                fullName: userData.fullName || prev.fullName,
+                phoneNumber: userData.phoneNumber || prev.phoneNumber,
+                bio: userData.bio ?? prev.bio,
+                profilePicture: userData.profilePicture || prev.profilePicture,
+              }));
+              setCurrentScreen("home");
+            }}
+            onSignUpSuccess={(userData) => {
+              setUser((prev) => ({
+                ...prev,
+                fullName: userData.fullName,
+                email: userData.email,
+                phoneNumber: userData.phoneNumber || "",
+                bio: userData.bio ?? "",
+                profilePicture: userData.profilePicture,
+              }));
+              setCurrentScreen("complete-profile");
+            }}
           />
         );
+
+      case "complete-profile":
+        return (
+          <CompleteProfileScreen
+            user={user}
+            onComplete={(updated) => {
+              setUser(updated);
+              setShowBudgetSetup(true); // mở dialog thiết lập ngân sách tháng
+              setCurrentScreen("home");
+            }}
+            onSkip={() => {
+              setShowBudgetSetup(true);
+              setCurrentScreen("home");
+            }}
+          />
+        );
+
       case "home":
         return (
           <HomeScreen
+            user={user} // 👈 truyền user vào để "Xin chào, {user.fullName}"
             balance={balance}
             totalIncome={totalIncome}
             totalExpenses={totalExpenses}
@@ -669,7 +712,7 @@ export default function App() {
           <OnboardingScreen
             onComplete={() => {
               setHasSeenOnboarding(true);
-              navigate("home");
+              navigate("auth");
             }}
             language={language}
           />
@@ -680,6 +723,7 @@ export default function App() {
   const showSidebar = ![
     "onboarding",
     "auth",
+    "complete-profile",
     "add-transaction",
     "edit-profile",
     "privacy-policy",

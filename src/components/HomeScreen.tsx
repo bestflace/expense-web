@@ -10,10 +10,11 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent } from "./ui/card";
-import type { Transaction, Category, Budget } from "../App";
+import type { User, Transaction, Category, Budget } from "../App";
 import { motion, AnimatePresence } from "motion/react";
 
 interface HomeScreenProps {
+  user: User;
   balance: number;
   totalIncome: number;
   totalExpenses: number;
@@ -26,6 +27,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({
+  user,
   balance,
   totalIncome,
   totalExpenses,
@@ -96,11 +98,15 @@ export function HomeScreen({
           className="mb-8"
         >
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-4xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Xin chào!
+            <div className="flex flex-col gap-1">
+              <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white">
+                Xin chào{" "}
+                <span className="font-bold text-blue-600 dark:text-blue-400">
+                  {user.fullName || "bạn"}
+                </span>
+                <span className="ml-1">👋</span>
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 text-lg mt-1">
+              <p className="text-gray-500 dark:text-gray-400 text-lg">
                 Tổng quan tài chính của bạn
               </p>
             </div>

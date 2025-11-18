@@ -134,7 +134,9 @@ export function AddTransactionScreen({
                 <CardContent>
                   <Tabs
                     value={formData.type}
-                    onValueChange={(value) => handleInputChange("type", value)}
+                    onValueChange={(value: string) =>
+                      handleInputChange("type", value)
+                    }
                   >
                     <TabsList className="grid w-full grid-cols-2 h-12">
                       <TabsTrigger
