@@ -5,57 +5,223 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 
-interface AuthScreenProps {
-  mode: "signin" | "signup";
-  onModeChange: (mode: "signin" | "signup") => void;
+type AuthMode = "signin" | "signup";
+type AuthView = "auth" | "forgot-email" | "reset-password";
 
-  onSignInSuccess: (user: {
-    email: string;
-
-    fullName?: string;
-
-    phoneNumber?: string;
-
-    bio?: string;
-
-    profilePicture?: string;
-  }) => void;
-
-  onSignUpSuccess: (user: {
-    email: string;
-
-    fullName: string;
-
-    phoneNumber?: string;
-
-    bio?: string;
-
-    profilePicture?: string;
-  }) => void;
+interface BaseUserPayload {
+  email: string;
+  fullName?: string;
+  phoneNumber?: string;
+  bio?: string;
+  profilePicture?: string;
 }
+
+interface AuthScreenProps {
+  mode: AuthMode;
+  onModeChange: (mode: AuthMode) => void;
+
+  onSignInSuccess: (user: BaseUserPayload) => void;
+  onSignUpSuccess: (
+    user: Required<Pick<BaseUserPayload, "email" | "fullName">> &
+      Omit<BaseUserPayload, "email" | "fullName">
+  ) => void;
+}
+
+/* ------------------------------ RESET PASSWORD SCREEN ------------------------------ */
+
+interface ResetPasswordScreenProps {
+  email: string;
+  onBack: () => void;
+  onDone: () => void;
+  onGoToSignup: () => void;
+}
+
+function ResetPasswordScreen({
+  email,
+  onBack,
+  onDone,
+  onGoToSignup,
+}: ResetPasswordScreenProps) {
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!code.trim()) {
+      toast.error("Vui lòng nhập mã xác nhận");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Mật khẩu mới quá ngắn", {
+        description: "Mật khẩu phải có ít nhất 6 ký tự",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast.error("Mật khẩu không khớp", {
+        description: "Vui lòng kiểm tra lại mật khẩu xác nhận",
+      });
+      return;
+    }
+
+    // TODO: gọi API /auth/reset-password
+    toast.success("Đổi mật khẩu thành công!");
+    onDone();
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        <motion.div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-200/50 dark:border-gray-700/50">
+          <div className="text-center mb-6">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-4xl">
+              💳
+            </div>
+            <h1 className="text-2xl font-semibold mb-1">Nhập mã xác nhận</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Chúng tôi đã gửi mã xác nhận đến{" "}
+              <span className="font-semibold uppercase">{email}</span>. Nhập mã
+              và mật khẩu mới để hoàn tất.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm mb-2">Mã xác nhận</label>
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Nhập mã gồm 6 ký tự"
+                className="h-11 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm mb-2">Mật khẩu mới</label>
+              <div className="relative">
+                <Input
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="h-11 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm mb-2">
+                Xác nhận mật khẩu mới
+              </label>
+              <div className="relative">
+                <Input
+                  type={showConfirmNewPassword ? "text" : "password"}
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="h-11 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmNewPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
+                  {showConfirmNewPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-11 rounded-xl"
+                onClick={onBack}
+              >
+                Quay lại
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 justify-center h-11 
+                           bg-gradient-to-br from-primary to-primary/80 
+                           text-primary-foreground 
+                           rounded-xl shadow-lg 
+                           hover:opacity-90 transition-colors"
+              >
+                Đổi mật khẩu
+              </Button>
+            </div>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Chưa có tài khoản?{" "}
+            <button
+              type="button"
+              onClick={onGoToSignup}
+              className="text-purple-600 font-medium hover:underline"
+            >
+              Đăng ký ngay
+            </button>
+          </p>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* --------------------------------------- MAIN AUTH SCREEN -------------------------------------- */
 
 export function AuthScreen({
   mode,
-
   onModeChange,
-
   onSignInSuccess,
-
   onSignUpSuccess,
 }: AuthScreenProps) {
+  const [view, setView] = useState<AuthView>("auth");
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [rememberMe, setRememberMe] = useState(false); // 👈 Ghi nhớ tôi
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /* ------------------------- SUBMIT FORM ĐĂNG NHẬP / ĐĂNG KÝ ------------------------- */
+
+  const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation
     if (!formData.email || !formData.password) {
       toast.error("Vui lòng điền đầy đủ thông tin", {
         description: "Email và mật khẩu là bắt buộc",
@@ -63,7 +229,6 @@ export function AuthScreen({
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error("Email không hợp lệ", {
@@ -72,7 +237,6 @@ export function AuthScreen({
       return;
     }
 
-    // Password validation
     if (formData.password.length < 6) {
       toast.error("Mật khẩu quá ngắn", {
         description: "Mật khẩu phải có ít nhất 6 ký tự",
@@ -81,7 +245,7 @@ export function AuthScreen({
     }
 
     if (mode === "signup") {
-      if (!formData.fullName) {
+      if (!formData.fullName.trim()) {
         toast.error("Vui lòng nhập họ tên", {
           description: "Họ tên là bắt buộc khi đăng ký",
         });
@@ -96,30 +260,131 @@ export function AuthScreen({
       }
     }
 
-    // TODO: Call API để xử lý đăng nhập/đăng ký
-    // Hiện tại chỉ show success và chuyển màn hình
-    // TODO: sau này gọi API backend ở đây
-
+    // TODO: Gọi API backend cho đăng nhập / đăng ký
     if (mode === "signin") {
       toast.success("Đăng nhập thành công!");
 
-      // Gửi dữ liệu user cho App (để App setUser và chuyển sang Home)
-
       onSignInSuccess({
         email: formData.email,
+        // sau này nếu muốn dùng rememberMe thì có thể truyền thêm vào đây
       });
+
+      if (rememberMe) {
+        // TODO: lưu token / email vào localStorage khi có backend
+        console.log("🔒 Remember me enabled");
+      }
     } else {
       toast.success("Đăng ký thành công!");
 
-      // Gửi dữ liệu user cho App (để App lưu và chuyển sang màn Complete Profile)
-
       onSignUpSuccess({
-        fullName: formData.fullName,
-
-        email: formData.email,
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim(),
       });
     }
   };
+
+  /* --------------------------- VIEW 2: QUÊN MẬT KHẨU (NHẬP EMAIL) --------------------------- */
+
+  if (view === "forgot-email") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <motion.div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-200/50 dark:border-gray-700/50">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-4xl">
+                💌
+              </div>
+              <h1 className="text-2xl font-semibold mb-1">Quên mật khẩu</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Nhập địa chỉ email của bạn, chúng tôi sẽ gửi mã xác nhận để đặt
+                lại mật khẩu.
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!forgotEmail.trim()) {
+                  toast.error("Vui lòng nhập email");
+                  return;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(forgotEmail)) {
+                  toast.error("Email không hợp lệ", {
+                    description: "Vui lòng nhập địa chỉ email hợp lệ",
+                  });
+                  return;
+                }
+
+                // TODO: gọi API /auth/forgot-password
+                toast.success("Đã gửi mã xác nhận", {
+                  description: `Vui lòng kiểm tra hộp thư đến tại ${forgotEmail}`,
+                });
+                setView("reset-password");
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm mb-2">Địa chỉ email</label>
+                <Input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="h-11 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 h-11 rounded-xl"
+                  onClick={() => setView("auth")}
+                >
+                  Quay lại
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 h-11 rounded-xl 
+                             bg-gradient-to-br from-primary to-primary/80 
+                             text-primary-foreground 
+                             shadow-lg hover:opacity-90 transition-colors"
+                >
+                  Gửi mã
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  /* --------------------------- VIEW 3: NHẬP MÃ + MẬT KHẨU MỚI --------------------------- */
+
+  if (view === "reset-password") {
+    return (
+      <ResetPasswordScreen
+        email={forgotEmail || "email của bạn"}
+        onBack={() => setView("forgot-email")}
+        onDone={() => {
+          setView("auth");
+        }}
+        onGoToSignup={() => {
+          setView("auth"); // quay về màn auth
+          onModeChange("signup"); // chuyển sang tab Đăng ký
+        }}
+      />
+    );
+  }
+
+  /* --------------------------- VIEW 1: ĐĂNG NHẬP / ĐĂNG KÝ --------------------------- */
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
@@ -128,7 +393,6 @@ export function AuthScreen({
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        {/* Card Container */}
         <motion.div
           className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-200/50 dark:border-gray-700/50"
           layout
@@ -158,7 +422,7 @@ export function AuthScreen({
           </motion.div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleAuthSubmit} className="space-y-4">
             <AnimatePresence mode="wait">
               {mode === "signup" && (
                 <motion.div
@@ -219,12 +483,38 @@ export function AuthScreen({
                   )}
                 </button>
               </div>
+
+              {/* Ghi nhớ tôi + Quên mật khẩu chỉ hiển thị ở chế độ Đăng nhập */}
+              {mode === "signin" && (
+                <div className="mt-3 flex items-center justify-between text-sm">
+                  <label className="flex items-center gap-2 text-gray-600 dark:text-gray-300 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span>Ghi nhớ tôi</span>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForgotEmail(formData.email);
+                      setView("forgot-email");
+                    }}
+                    className="text-purple-600 dark:text-purple-400 hover:underline transition-all"
+                  >
+                    Quên mật khẩu?
+                  </button>
+                </div>
+              )}
             </div>
 
             <AnimatePresence mode="wait">
               {mode === "signup" && (
                 <motion.div
-                  key="confirmpassword"
+                  key="confirm-password"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -267,7 +557,11 @@ export function AuthScreen({
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
                 type="submit"
-                className="w-full py-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl shadow-lg transition-all duration-300"
+                className="w-full py-6 
+                           bg-gradient-to-br from-primary to-primary/80 
+                           text-primary-foreground 
+                           rounded-xl shadow-lg 
+                           hover:opacity-90 transition-colors"
               >
                 {mode === "signin" ? "Đăng nhập" : "Đăng ký"}
               </Button>
