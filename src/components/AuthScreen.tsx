@@ -16,15 +16,33 @@ interface BaseUserPayload {
   profilePicture?: string;
 }
 
+// interface AuthScreenProps {
+//   mode: AuthMode;
+//   onModeChange: (mode: AuthMode) => void;
+
+//   onSignInSuccess: (user: BaseUserPayload) => void;
+//   onSignUpSuccess: (
+//     user: Required<Pick<BaseUserPayload, "email" | "fullName">> &
+//       Omit<BaseUserPayload, "email" | "fullName">
+//   ) => void;
+// }
 interface AuthScreenProps {
   mode: AuthMode;
   onModeChange: (mode: AuthMode) => void;
 
-  onSignInSuccess: (user: BaseUserPayload) => void;
-  onSignUpSuccess: (
+  // Cũ, cho optional để không bắt buộc truyền từ App
+  onSignInSuccess?: (user: BaseUserPayload) => void;
+  onSignUpSuccess?: (
     user: Required<Pick<BaseUserPayload, "email" | "fullName">> &
       Omit<BaseUserPayload, "email" | "fullName">
   ) => void;
+
+  // Mới: App.tsx đang truyền prop này
+  onAuthSuccess?: (params: {
+    user: { id?: string; fullName: string; email: string };
+    token?: string; // tạm thời cho optional, sau này gắn token backend vào
+    rememberMe: boolean;
+  }) => void;
 }
 
 /* ------------------------------ RESET PASSWORD SCREEN ------------------------------ */
@@ -201,6 +219,7 @@ export function AuthScreen({
   onModeChange,
   onSignInSuccess,
   onSignUpSuccess,
+  onAuthSuccess,
 }: AuthScreenProps) {
   const [view, setView] = useState<AuthView>("auth");
 
@@ -260,25 +279,51 @@ export function AuthScreen({
       }
     }
 
-    // TODO: Gọi API backend cho đăng nhập / đăng ký
+    // TODO: sau này gọi API backend ở đây
     if (mode === "signin") {
       toast.success("Đăng nhập thành công!");
 
-      onSignInSuccess({
-        email: formData.email,
-        // sau này nếu muốn dùng rememberMe thì có thể truyền thêm vào đây
+      const baseUser = {
+        email: formData.email.trim(),
+        fullName: formData.fullName.trim() || "Người dùng",
+      };
+
+      // callback cũ – có thì gọi, không có thì thôi
+      onSignInSuccess?.(baseUser);
+
+      // callback mới cho App.tsx (onAuthSuccess)
+      onAuthSuccess?.({
+        user: {
+          id: undefined, // sau này gán id từ backend
+          fullName: baseUser.fullName,
+          email: baseUser.email,
+        },
+        token: "", // sau này gán token thật
+        rememberMe,
       });
 
       if (rememberMe) {
-        // TODO: lưu token / email vào localStorage khi có backend
         console.log("🔒 Remember me enabled");
+        // TODO: lưu token/email vào localStorage khi có backend
       }
     } else {
       toast.success("Đăng ký thành công!");
 
-      onSignUpSuccess({
+      const baseUser = {
         fullName: formData.fullName.trim(),
         email: formData.email.trim(),
+      };
+
+      onSignUpSuccess?.(baseUser);
+
+      onAuthSuccess?.({
+        user: {
+          id: undefined,
+          fullName: baseUser.fullName,
+          email: baseUser.email,
+        },
+        token: "",
+        rememberMe: true,
       });
     }
   };

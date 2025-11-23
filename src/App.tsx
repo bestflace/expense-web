@@ -19,6 +19,8 @@ import { motion, AnimatePresence } from "motion/react";
 
 import { CompleteProfileScreen } from "./components/CompleteProfileScreen";
 
+const API_BASE_URL = "http://localhost:4000/api";
+
 export type Screen =
   | "onboarding"
   | "auth"
@@ -70,6 +72,7 @@ export type Budget = {
 };
 
 export type User = {
+  id?: string;
   fullName: string;
   email: string;
   phoneNumber: string;
@@ -84,6 +87,7 @@ export default function App() {
   const [language, setLanguage] = useState<"vi" | "en">("vi");
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   const [showBudgetSetup, setShowBudgetSetup] = useState(false);
@@ -194,7 +198,8 @@ export default function App() {
   });
 
   const [user, setUser] = useState<User>({
-    fullName: "Ngọc Châu",
+    id: undefined,
+    fullName: "",
     email: "",
     phoneNumber: "",
     bio: "",
@@ -566,7 +571,78 @@ export default function App() {
       document.body.classList.remove("dark");
     }
   }, [isDarkMode]);
+  // Thêm
+  React.useEffect(() => {
+    const savedToken = localStorage.getItem("authToken");
+    if (!savedToken) return;
 
+    setAuthToken(savedToken);
+
+    fetch(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${savedToken}`,
+      },
+    })
+      .then(async (res) => {
+        const json = await res.json();
+
+        if (!res.ok || json.status !== "success") {
+          throw new Error(json.message || "Không thể lấy thông tin người dùng");
+        }
+
+        const u = json.data.user;
+
+        setUser((prev) => ({
+          ...prev,
+          id: u.id,
+          fullName: u.fullName,
+          email: u.email,
+          phoneNumber: u.phoneNumber || prev.phoneNumber,
+          bio: u.bio || prev.bio,
+          profilePicture: u.avatarUrl || prev.profilePicture,
+        }));
+
+        setHasSeenOnboarding(true);
+        setCurrentScreen("home");
+      })
+      .catch((err) => {
+        console.error("/auth/me error:", err);
+        localStorage.removeItem("authToken");
+        setAuthToken(null);
+      });
+  }, []);
+  //Thêm
+  const handleAuthSuccess = (params: {
+    user: { id?: string; fullName: string; email: string };
+    token?: string;
+    rememberMe: boolean;
+  }) => {
+    const { user, token, rememberMe } = params;
+
+    // cập nhật user FE (id có thể undefined nên dùng ?? giữ lại giá trị cũ nếu chưa có)
+    setUser((prev) => ({
+      ...prev,
+      id: user.id ?? prev.id,
+      fullName: user.fullName,
+      email: user.email,
+    }));
+
+    // lưu token nếu có
+    if (token) {
+      setAuthToken(token);
+
+      if (rememberMe) {
+        localStorage.setItem("authToken", token);
+      } else {
+        localStorage.removeItem("authToken");
+      }
+    }
+
+    setHasSeenOnboarding(true);
+    setCurrentScreen("home"); // sau này signup xong muốn nhảy sang complete-profile thì chỉnh thêm chỗ này
+  };
+
+  //Hết thêm
   const renderScreen = () => {
     switch (currentScreen) {
       case "onboarding":
@@ -584,31 +660,41 @@ export default function App() {
           <AuthScreen
             mode={authMode}
             onModeChange={setAuthMode}
-            onSignInSuccess={(userData) => {
-              // sau này thay bằng data trả từ backend
-              setUser((prev) => ({
-                ...prev,
-                email: userData.email,
-                fullName: userData.fullName || prev.fullName,
-                phoneNumber: userData.phoneNumber || prev.phoneNumber,
-                bio: userData.bio ?? prev.bio,
-                profilePicture: userData.profilePicture || prev.profilePicture,
-              }));
-              setCurrentScreen("home");
-            }}
-            onSignUpSuccess={(userData) => {
-              setUser((prev) => ({
-                ...prev,
-                fullName: userData.fullName,
-                email: userData.email,
-                phoneNumber: userData.phoneNumber || "",
-                bio: userData.bio ?? "",
-                profilePicture: userData.profilePicture,
-              }));
-              setCurrentScreen("complete-profile");
-            }}
+            // 🆕 nhận user + token từ backend
+            onAuthSuccess={handleAuthSuccess}
           />
         );
+
+      // case "auth":
+      //   return (
+      //     <AuthScreen
+      //       mode={authMode}
+      //       onModeChange={setAuthMode}
+      //       onSignInSuccess={(userData) => {
+      //         // sau này thay bằng data trả từ backend
+      //         setUser((prev) => ({
+      //           ...prev,
+      //           email: userData.email,
+      //           fullName: userData.fullName || prev.fullName,
+      //           phoneNumber: userData.phoneNumber || prev.phoneNumber,
+      //           bio: userData.bio ?? prev.bio,
+      //           profilePicture: userData.profilePicture || prev.profilePicture,
+      //         }));
+      //         setCurrentScreen("home");
+      //       }}
+      //       onSignUpSuccess={(userData) => {
+      //         setUser((prev) => ({
+      //           ...prev,
+      //           fullName: userData.fullName,
+      //           email: userData.email,
+      //           phoneNumber: userData.phoneNumber || "",
+      //           bio: userData.bio ?? "",
+      //           profilePicture: userData.profilePicture,
+      //         }));
+      //         setCurrentScreen("complete-profile");
+      //       }}
+      //     />
+      //   );
 
       case "complete-profile":
         return (
@@ -731,6 +817,23 @@ export default function App() {
   ].includes(currentScreen);
 
   const handleLogout = () => {
+    setAuthToken(null);
+    localStorage.removeItem("authToken");
+
+    // reset user về rỗng
+    setUser({
+      id: undefined,
+      fullName: "",
+      email: "",
+      phoneNumber: "",
+      bio: "",
+      profilePicture: undefined,
+    });
+
+    // nếu muốn reset luôn giao dịch / ví thì làm thêm ở đây:
+    // setTransactions([]);
+    // setWallets([...]); // tuỳ bạn
+
     navigate("onboarding");
     setShowLogoutConfirm(false);
     toast.success("Đã đăng xuất thành công!");
