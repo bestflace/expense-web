@@ -14,11 +14,14 @@ import { Textarea } from "./ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import type { Category, Transaction, Wallet } from "../App";
+import { toast } from "sonner";
 
 interface AddTransactionScreenProps {
   categories: Category[];
   wallets: Wallet[];
-  onAddTransaction: (transaction: Omit<Transaction, "id">) => void;
+  onAddTransaction: (
+    transaction: Omit<Transaction, "id">
+  ) => void | Promise<void>;
   onBack: () => void;
 }
 
@@ -38,23 +41,70 @@ export function AddTransactionScreen({
     description: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.category || !formData.amount || !formData.description) {
+
+    // 1. Validate danh mục
+    if (!formData.category) {
+      toast.error("Vui lòng chọn danh mục", {
+        description: "Danh mục giúp bạn phân loại giao dịch.",
+      });
       return;
     }
 
-    const amount = parseFloat(formData.amount);
-    if (amount <= 0) {
+    // 2. Validate ví
+    if (!formData.walletId) {
+      toast.error("Vui lòng chọn ví", {
+        description: "Bạn cần chọn ví cho giao dịch này.",
+      });
       return;
     }
 
-    onAddTransaction({
-      type: formData.type,
-      category: formData.category,
+    // 3. Validate số tiền
+    if (!formData.amount || !formData.amount.trim()) {
+      toast.error("Vui lòng nhập số tiền");
+      return;
+    }
+
+    const amount = Number(formData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Số tiền không hợp lệ", {
+        description: "Vui lòng nhập số tiền lớn hơn 0.",
+      });
+      return;
+    }
+
+    // 4. (tuỳ bạn) mô tả bắt buộc hay không
+    if (!formData.description.trim()) {
+      toast.error("Vui lòng nhập mô tả", {
+        description: "Mô tả giúp bạn nhớ rõ giao dịch này.",
+      });
+      return;
+    }
+
+    // 5. Kiểm tra category tồn tại
+    const selectedCategoryObj = categories.find(
+      (c) => c.name === formData.category
+    );
+    if (!selectedCategoryObj) {
+      toast.error("Danh mục không hợp lệ", {
+        description: "Vui lòng chọn lại danh mục.",
+      });
+      return;
+    }
+
+    // 6. (optional) kiểm tra ngày
+    if (!formData.date) {
+      toast.error("Vui lòng chọn ngày giao dịch");
+      return;
+    }
+
+    await onAddTransaction({
+      type: formData.type, // "income" | "expense"
+      category: formData.category, // tên danh mục
       subcategory: formData.subcategory || undefined,
-      walletId: formData.walletId || undefined,
-      amount: amount,
+      walletId: formData.walletId,
+      amount,
       date: formData.date,
       description: formData.description,
     });

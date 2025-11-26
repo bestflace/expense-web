@@ -4,6 +4,12 @@ import { Input } from "./ui/input";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
+import {
+  loginApi,
+  registerApi,
+  forgotPasswordApi,
+  resetPasswordApi,
+} from "../utils/api";
 
 type AuthMode = "signin" | "signup";
 type AuthView = "auth" | "forgot-email" | "reset-password";
@@ -42,6 +48,7 @@ interface AuthScreenProps {
     user: { id?: string; fullName: string; email: string };
     token?: string; // tạm thời cho optional, sau này gắn token backend vào
     rememberMe: boolean;
+    mode: AuthMode;
   }) => void;
 }
 
@@ -66,11 +73,18 @@ function ResetPasswordScreen({
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!code.trim()) {
       toast.error("Vui lòng nhập mã xác nhận");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(code.trim())) {
+      toast.error("Mã xác nhận không hợp lệ", {
+        description: "Mã phải gồm đúng 6 chữ số",
+      });
       return;
     }
 
@@ -88,9 +102,29 @@ function ResetPasswordScreen({
       return;
     }
 
-    // TODO: gọi API /auth/reset-password
-    toast.success("Đổi mật khẩu thành công!");
-    onDone();
+    try {
+      await resetPasswordApi(code.trim(), newPassword);
+
+      toast.success("Đổi mật khẩu thành công!", {
+        description: "Bạn có thể đăng nhập với mật khẩu mới",
+      });
+
+      // reset state local
+      setCode("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+
+      onDone(); // quay về màn Auth
+    } catch (err) {
+      console.error("resetPassword error:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Không thể đặt lại mật khẩu",
+        {
+          description:
+            err instanceof Error ? undefined : "Vui lòng thử lại sau ít phút",
+        }
+      );
+    }
   };
 
   return (
@@ -238,9 +272,10 @@ export function AuthScreen({
 
   /* ------------------------- SUBMIT FORM ĐĂNG NHẬP / ĐĂNG KÝ ------------------------- */
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 1) Validate như cũ
     if (!formData.email || !formData.password) {
       toast.error("Vui lòng điền đầy đủ thông tin", {
         description: "Email và mật khẩu là bắt buộc",
@@ -279,52 +314,56 @@ export function AuthScreen({
       }
     }
 
-    // TODO: sau này gọi API backend ở đây
-    if (mode === "signin") {
-      toast.success("Đăng nhập thành công!");
+    try {
+      // Gọi API thông qua utils/api.ts
+      const response =
+        mode === "signin"
+          ? await loginApi(formData.email, formData.password)
+          : await registerApi(
+              formData.fullName,
+              formData.email,
+              formData.password
+            );
 
-      const baseUser = {
-        email: formData.email.trim(),
-        fullName: formData.fullName.trim() || "Người dùng",
-      };
+      const backendUser = response.user;
+      const token = response.token;
 
-      // callback cũ – có thì gọi, không có thì thôi
-      onSignInSuccess?.(baseUser);
+      toast.success(
+        mode === "signin" ? "Đăng nhập thành công!" : "Đăng ký thành công!"
+      );
 
-      // callback mới cho App.tsx (onAuthSuccess)
-      onAuthSuccess?.({
-        user: {
-          id: undefined, // sau này gán id từ backend
-          fullName: baseUser.fullName,
-          email: baseUser.email,
-        },
-        token: "", // sau này gán token thật
-        rememberMe,
-      });
-
-      if (rememberMe) {
-        console.log("🔒 Remember me enabled");
-        // TODO: lưu token/email vào localStorage khi có backend
+      // ƯU TIÊN onAuthSuccess (App đang dùng)
+      if (onAuthSuccess) {
+        onAuthSuccess({
+          user: {
+            id: backendUser.id,
+            fullName: backendUser.fullName,
+            email: backendUser.email,
+          },
+          token,
+          rememberMe,
+          mode, // 👈 truyền kèm mode (signin / signup)
+        });
+      } else if (mode === "signin" && onSignInSuccess) {
+        onSignInSuccess({
+          email: backendUser.email,
+          fullName: backendUser.fullName,
+        });
+      } else if (mode === "signup" && onSignUpSuccess) {
+        onSignUpSuccess({
+          email: backendUser.email,
+          fullName: backendUser.fullName,
+        });
       }
-    } else {
-      toast.success("Đăng ký thành công!");
-
-      const baseUser = {
-        fullName: formData.fullName.trim(),
-        email: formData.email.trim(),
-      };
-
-      onSignUpSuccess?.(baseUser);
-
-      onAuthSuccess?.({
-        user: {
-          id: undefined,
-          fullName: baseUser.fullName,
-          email: baseUser.email,
-        },
-        token: "",
-        rememberMe: true,
-      });
+    } catch (error) {
+      console.error("Auth error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Không thể kết nối server",
+        {
+          description:
+            error instanceof Error ? undefined : "Vui lòng thử lại sau",
+        }
+      );
     }
   };
 
@@ -351,8 +390,9 @@ export function AuthScreen({
             </div>
 
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
+
                 if (!forgotEmail.trim()) {
                   toast.error("Vui lòng nhập email");
                   return;
@@ -366,11 +406,28 @@ export function AuthScreen({
                   return;
                 }
 
-                // TODO: gọi API /auth/forgot-password
-                toast.success("Đã gửi mã xác nhận", {
-                  description: `Vui lòng kiểm tra hộp thư đến tại ${forgotEmail}`,
-                });
-                setView("reset-password");
+                try {
+                  await forgotPasswordApi(forgotEmail);
+
+                  toast.success("Đã gửi mã xác nhận", {
+                    description: `Vui lòng kiểm tra hộp thư đến tại ${forgotEmail}`,
+                  });
+
+                  setView("reset-password");
+                } catch (err) {
+                  console.error("forgotPassword error:", err);
+                  toast.error(
+                    err instanceof Error
+                      ? err.message
+                      : "Không thể gửi mã xác nhận",
+                    {
+                      description:
+                        err instanceof Error
+                          ? undefined
+                          : "Vui lòng thử lại sau ít phút",
+                    }
+                  );
+                }
               }}
               className="space-y-4"
             >

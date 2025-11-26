@@ -104,7 +104,6 @@ export function HomeScreen({
                 <span className="font-bold text-blue-600 dark:text-blue-400">
                   {user.fullName || "bạn"}
                 </span>
-                <span className="ml-1">👋</span>
               </h1>
               <p className="text-gray-500 dark:text-gray-400 text-lg">
                 Tổng quan tài chính của bạn

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { toast } from "sonner";
 import type { User } from "../App";
-
+import { updateProfileApi } from "../utils/api";
 interface EditProfileScreenProps {
   user: User;
   onUpdateUser: React.Dispatch<React.SetStateAction<User>>;
@@ -55,7 +55,7 @@ export function EditProfileScreen({
     return phoneRegex.test(phone);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     let hasErrors = false;
@@ -67,7 +67,7 @@ export function EditProfileScreen({
       hasErrors = true;
     }
 
-    // Validate email
+    // Validate email (dù backend chưa cho sửa email, vẫn check cho đẹp form)
     if (!validateEmail(formData.email)) {
       newErrors.email =
         "Vui lòng nhập địa chỉ email hợp lệ (ví dụ: user@example.com)";
@@ -89,9 +89,38 @@ export function EditProfileScreen({
       return;
     }
 
-    onUpdateUser(formData);
-    toast.success("Cập nhật hồ sơ thành công!");
-    onBack();
+    try {
+      // gọi backend cập nhật hồ sơ
+      const res = await updateProfileApi({
+        fullName: formData.fullName,
+        phoneNumber: formData.phoneNumber,
+        bio: formData.bio,
+        avatarUrl: formData.profilePicture || undefined,
+      });
+
+      const backendUser = res.user;
+
+      // cập nhật lại state User ở App.tsx
+      onUpdateUser((prev) => ({
+        ...prev,
+        id: backendUser.id ?? prev.id,
+        fullName: backendUser.fullName ?? prev.fullName,
+        email: backendUser.email ?? prev.email,
+        phoneNumber: backendUser.phoneNumber || "",
+        bio: backendUser.bio ?? "",
+        profilePicture: backendUser.avatarUrl ?? prev.profilePicture,
+      }));
+
+      toast.success("Cập nhật hồ sơ thành công!");
+      onBack();
+    } catch (err) {
+      console.error("updateProfileApi error:", err);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Không thể cập nhật hồ sơ. Vui lòng thử lại."
+      );
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -205,6 +234,7 @@ export function EditProfileScreen({
                   id="email"
                   type="email"
                   value={formData.email}
+                  disabled
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="Nhập email của bạn"
                   className={

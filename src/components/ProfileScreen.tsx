@@ -27,6 +27,7 @@ import {
 import { ConfirmDialog } from "./ConfirmDialog";
 import type { User, Budget } from "../App";
 import { toast } from "sonner";
+import { changePasswordApi } from "../utils/api";
 
 interface ProfileScreenProps {
   user: User;
@@ -94,7 +95,7 @@ export function ProfileScreen({
     return { isValid: true };
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     // Validate current password
     if (!currentPassword) {
       toast.error("Vui lòng nhập mật khẩu hiện tại");
@@ -124,17 +125,28 @@ export function ProfileScreen({
       return;
     }
 
-    // Mock password change
-    console.log("✅ Password changed successfully");
-    toast.success("Mật khẩu đã được thay đổi thành công!", {
-      description: "Bạn có thể đăng nhập với mật khẩu mới",
-    });
+    try {
+      await changePasswordApi(currentPassword, newPassword);
 
-    // Reset states
-    setShowPasswordDialog(false);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmNewPassword("");
+      toast.success("Mật khẩu đã được thay đổi thành công!", {
+        description: "Bạn có thể đăng nhập với mật khẩu mới",
+      });
+
+      // Reset states
+      setShowPasswordDialog(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (err) {
+      console.error("changePasswordApi error:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Không thể đổi mật khẩu",
+        {
+          description:
+            err instanceof Error ? undefined : "Vui lòng thử lại sau ít phút",
+        }
+      );
+    }
   };
 
   const handleBudgetUpdate = () => {
