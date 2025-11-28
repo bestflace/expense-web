@@ -381,3 +381,51 @@ export async function getBudgetAlertsApi(params?: {
     method: "GET",
   });
 }
+// ================== CHATBOT ==================
+
+export type ChatAskResponse = {
+  sessionId: string;
+  reply: string;
+};
+
+// Gửi câu hỏi cho chatbot
+export async function chatAskApi(payload: {
+  sessionId?: string | null;
+  message: string;
+}) {
+  return request<ChatAskResponse>("/api/chat/ask", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// (tuỳ chọn) Lấy danh sách phiên chat – nếu sau này bạn muốn hiển thị list
+export type ChatSessionApi = {
+  id: string;
+  title: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function chatListSessionsApi() {
+  return request<ChatSessionApi[]>("/api/chat/sessions", {
+    method: "GET",
+  });
+}
+
+// (tuỳ chọn) Lấy chi tiết 1 phiên chat
+export type ChatMessageApi = {
+  id: string;
+  sender: "user" | "assistant" | "system";
+  content: string;
+  created_at: string;
+};
+
+export async function chatGetSessionApi(sessionId: string) {
+  return request<{
+    session: ChatSessionApi;
+    messages: ChatMessageApi[];
+  }>(`/api/chat/sessions/${sessionId}`, {
+    method: "GET",
+  });
+}

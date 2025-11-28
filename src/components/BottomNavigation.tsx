@@ -2,7 +2,7 @@ import React from "react";
 import { Home, PieChart, FolderOpen, Settings, LogOut } from "lucide-react";
 import type { Screen } from "../App";
 import { motion } from "motion/react";
-
+import BudgetFLogo from "../img/BudgetF.png";
 interface SidebarNavigationProps {
   currentScreen: Screen;
   onNavigate: (screen: Screen) => void;
@@ -41,9 +41,11 @@ export function BottomNavigation({
             transition={{ type: "spring", stiffness: 300 }}
             className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
           >
-            <span className="text-white text-2xl">
-              <img src="/BudgetF.png" alt="logo" className="rounded-xl" />
-            </span>
+            <img
+              src={BudgetFLogo}
+              alt="BudgetF logo"
+              className="w-10 h-10 rounded-xl object-cover"
+            />
           </motion.div>
           <div>
             <h1 className="text-xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">

@@ -454,11 +454,9 @@ export function ProfileScreen({
 
           {/* App Info */}
           <div className="text-center pt-6 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-gray-500 dark:text-gray-400">
-              ExpenseTracker v1.0.0
-            </p>
+            <p className="text-gray-500 dark:text-gray-400">BudgetF v1.0.0</p>
             <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
-              © 2024 ExpenseTracker. All rights reserved.
+              © 2025 BudgetF. All rights reserved.
             </p>
           </div>
         </div>

@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
-import { X, Trash2, Save } from 'lucide-react';
-import { Transaction, Category } from '../App';
-import { ConfirmDialog } from './ConfirmDialog';
+import React, { useState } from "react";
+import { X, Trash2, Save } from "lucide-react";
+import { Transaction, Category } from "../App";
+import { ConfirmDialog } from "./ConfirmDialog";
+// Chuẩn hóa mọi kiểu string ngày (ISO, v.v.) thành "YYYY-MM-DD" cho <input type="date">
+function toDateInputValue(raw?: string): string {
+  if (!raw) return "";
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return "";
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 type EditTransactionDialogProps = {
   transaction: Transaction;
   categories: Category[];
-  wallets: { id: string; name: string; }[];
+  wallets: { id: string; name: string }[];
   onUpdate: (updates: Partial<Transaction>) => void;
   onDelete: () => void;
   onClose: () => void;
@@ -18,23 +29,26 @@ export function EditTransactionDialog({
   wallets,
   onUpdate,
   onDelete,
-  onClose
+  onClose,
 }: EditTransactionDialogProps) {
-  const [type, setType] = useState<'income' | 'expense'>(transaction.type);
+  const [type, setType] = useState<"income" | "expense">(transaction.type);
   const [category, setCategory] = useState(transaction.category);
-  const [subcategory, setSubcategory] = useState(transaction.subcategory || '');
+  const [subcategory, setSubcategory] = useState(transaction.subcategory || "");
   const [amount, setAmount] = useState(transaction.amount.toString());
-  const [date, setDate] = useState(transaction.date);
   const [description, setDescription] = useState(transaction.description);
-  const [walletId, setWalletId] = useState(transaction.walletId || '');
+  const [walletId, setWalletId] = useState(transaction.walletId || "");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [date, setDate] = useState<string>(() =>
+    toDateInputValue(transaction.date)
+  );
+  const filteredCategories = categories.filter(
+    (c) => c.type === type && !c.parentCategoryId
+  );
 
-  const filteredCategories = categories.filter(c => c.type === type && !c.parentCategoryId);
-  
-  const selectedCategoryObj = categories.find(c => c.name === category);
-  const subcategories = selectedCategoryObj 
-    ? categories.filter(c => c.parentCategoryId === selectedCategoryObj.id)
+  const selectedCategoryObj = categories.find((c) => c.name === category);
+  const subcategories = selectedCategoryObj
+    ? categories.filter((c) => c.parentCategoryId === selectedCategoryObj.id)
     : [];
 
   const handleUpdate = () => {
@@ -58,7 +72,7 @@ export function EditTransactionDialog({
       amount: parsedAmount,
       date,
       description,
-      walletId: walletId || undefined
+      walletId: walletId || undefined,
     });
     setShowUpdateConfirm(false);
     onClose();
@@ -76,7 +90,10 @@ export function EditTransactionDialog({
         <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-background border-b border-border p-6 flex items-center justify-between">
             <h2 className="text-foreground">Chỉnh sửa giao dịch</h2>
-            <button onClick={onClose} className="p-2 hover:bg-accent rounded-lg">
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-accent rounded-lg"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -84,18 +101,20 @@ export function EditTransactionDialog({
           <div className="p-6 space-y-6">
             {/* Type Selection */}
             <div>
-              <label className="block text-muted-foreground mb-2">Loại giao dịch</label>
+              <label className="block text-muted-foreground mb-2">
+                Loại giao dịch
+              </label>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => {
-                    setType('income');
-                    setCategory('');
-                    setSubcategory('');
+                    setType("income");
+                    setCategory("");
+                    setSubcategory("");
                   }}
                   className={`p-4 rounded-lg border-2 transition-colors ${
-                    type === 'income'
-                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                      : 'border-border hover:border-green-300'
+                    type === "income"
+                      ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                      : "border-border hover:border-green-300"
                   }`}
                 >
                   <div className="text-2xl mb-2">💰</div>
@@ -103,14 +122,14 @@ export function EditTransactionDialog({
                 </button>
                 <button
                   onClick={() => {
-                    setType('expense');
-                    setCategory('');
-                    setSubcategory('');
+                    setType("expense");
+                    setCategory("");
+                    setSubcategory("");
                   }}
                   className={`p-4 rounded-lg border-2 transition-colors ${
-                    type === 'expense'
-                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                      : 'border-border hover:border-red-300'
+                    type === "expense"
+                      ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                      : "border-border hover:border-red-300"
                   }`}
                 >
                   <div className="text-2xl mb-2">💸</div>
@@ -121,17 +140,19 @@ export function EditTransactionDialog({
 
             {/* Category Selection */}
             <div>
-              <label className="block text-muted-foreground mb-2">Danh mục</label>
+              <label className="block text-muted-foreground mb-2">
+                Danh mục
+              </label>
               <select
                 value={category}
                 onChange={(e) => {
                   setCategory(e.target.value);
-                  setSubcategory('');
+                  setSubcategory("");
                 }}
                 className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
               >
                 <option value="">Chọn danh mục</option>
-                {filteredCategories.map(cat => (
+                {filteredCategories.map((cat) => (
                   <option key={cat.id} value={cat.name}>
                     {cat.icon} {cat.name}
                   </option>
@@ -142,14 +163,16 @@ export function EditTransactionDialog({
             {/* Subcategory Selection */}
             {subcategories.length > 0 && (
               <div>
-                <label className="block text-muted-foreground mb-2">Danh mục con</label>
+                <label className="block text-muted-foreground mb-2">
+                  Danh mục con
+                </label>
                 <select
                   value={subcategory}
                   onChange={(e) => setSubcategory(e.target.value)}
                   className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
                 >
                   <option value="">Không có danh mục con</option>
-                  {subcategories.map(sub => (
+                  {subcategories.map((sub) => (
                     <option key={sub.id} value={sub.name}>
                       {sub.icon} {sub.name}
                     </option>
@@ -168,7 +191,7 @@ export function EditTransactionDialog({
                   className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
                 >
                   <option value="">Chọn ví</option>
-                  {wallets.map(wallet => (
+                  {wallets.map((wallet) => (
                     <option key={wallet.id} value={wallet.id}>
                       {wallet.name}
                     </option>
@@ -179,7 +202,9 @@ export function EditTransactionDialog({
 
             {/* Amount */}
             <div>
-              <label className="block text-muted-foreground mb-2">Số tiền (₫)</label>
+              <label className="block text-muted-foreground mb-2">
+                Số tiền (₫)
+              </label>
               <input
                 type="number"
                 step="1000"
@@ -196,7 +221,7 @@ export function EditTransactionDialog({
               <label className="block text-muted-foreground mb-2">Ngày</label>
               <input
                 type="date"
-                value={date}
+                value={date || ""}
                 onChange={(e) => setDate(e.target.value)}
                 className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
               />

@@ -6,7 +6,7 @@ import { Input } from "./ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import type { User } from "../App";
 import { toast } from "sonner";
-
+import { updateProfileApi } from "../utils/api";
 interface CompleteProfileScreenProps {
   user: User;
   onComplete: (updatedUser: User) => void;
@@ -57,8 +57,8 @@ export function CompleteProfileScreen({
     };
     reader.readAsDataURL(file);
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!fullName.trim()) {
@@ -66,15 +66,41 @@ export function CompleteProfileScreen({
       return;
     }
 
-    const updatedUser: User = {
-      ...user,
-      fullName: fullName.trim(),
-      phoneNumber: phoneNumber.trim(),
-      bio: bio.trim(),
-      profilePicture: avatarPreview,
-    };
+    try {
+      setIsSaving(true);
 
-    onComplete(updatedUser);
+      // Gửi lên backend
+      const res = await updateProfileApi({
+        fullName: fullName.trim(),
+        phoneNumber: phoneNumber.trim() || undefined,
+        bio: bio.trim() || undefined,
+        avatarUrl: avatarPreview, // base64 hoặc URL tùy backend bạn đang xử lý
+      });
+
+      const backendUser = res.user;
+
+      const updatedUser: User = {
+        ...user,
+        id: backendUser.id,
+        fullName: backendUser.fullName,
+        email: backendUser.email,
+        phoneNumber: backendUser.phoneNumber ?? "",
+        bio: backendUser.bio ?? "",
+        profilePicture: backendUser.avatarUrl ?? avatarPreview,
+      };
+
+      toast.success("Cập nhật hồ sơ thành công!");
+      onComplete(updatedUser);
+    } catch (error) {
+      console.error("Update profile error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Không thể cập nhật hồ sơ. Vui lòng thử lại sau."
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -83,17 +109,17 @@ export function CompleteProfileScreen({
         {/* HEADER TRÊN CÙNG */}
         <div className="flex items-center justify-between border-b border-gray-200 pb-4">
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-[0.18em]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-600">
               Thiết lập hồ sơ
             </p>
-            <p className="mt-1 text-sm text-gray-700">
+            <p className="mt-1 text-sm text-gray-600">
               Chỉ mất dưới 1 phút – giúp BudgetF hiểu bạn hơn.
             </p>
           </div>
           <button
             type="button"
             onClick={onSkip}
-            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors"
           >
             Bỏ qua
           </button>
@@ -108,12 +134,11 @@ export function CompleteProfileScreen({
         >
           {/* TIÊU ĐỀ CHÍNH */}
           <div className="text-center space-y-1">
-            <h1 className="text-xl font-semibold text-gray-900">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Làm quen trước nhé <span>👋</span>
             </h1>
             <p className="text-sm text-gray-600">
-              Thêm vài thông tin cơ bản để cá nhân hoá trải nghiệm tài chính của
-              bạn.
+              Thêm vài thông tin cơ bản để BudgetF đồng hành cùng bạn tốt hơn.
             </p>
           </div>
 
@@ -122,7 +147,7 @@ export function CompleteProfileScreen({
             <motion.button
               type="button"
               onClick={handleAvatarClick}
-              className="relative rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white"
+              className="relative inline-flex rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.96 }}
               transition={{ type: "spring", stiffness: 260, damping: 18 }}
@@ -144,7 +169,7 @@ export function CompleteProfileScreen({
               </motion.div>
 
               {/* ICON CAMERA Ở GIỮA BÊN DƯỚI */}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md">
+              <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-white bg-white shadow-lg">
                 <Camera className="h-4 w-4 text-blue-600" />
               </div>
             </motion.button>
@@ -242,14 +267,14 @@ export function CompleteProfileScreen({
                 type="button"
                 variant="outline"
                 onClick={onSkip}
-                className="flex-1 h-11 rounded-2xl"
+                className="flex-1 h-11 rounded-2xl border border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Để sau
               </Button>
               <Button
                 type="submit"
                 variant="default"
-                className="flex-1 h-11 rounded-2xl"
+                className="flex-1 h-11 rounded-2xl bg-gray-900 text-white shadow-lg hover:bg-black"
               >
                 Xác nhận
               </Button>

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import type { BackendUser } from "./utils/api";
 import { CompleteProfileScreen } from "./components/CompleteProfileScreen";
+import ChatbotWidget from "./components/ChatbotWidget";
 // Import API
 import { API_BASE_URL, STORAGE_KEYS } from "./config";
 import {
@@ -853,6 +854,15 @@ export default function App() {
       });
   }, [authToken]);
   // Transaction
+  function toDateInputValue(raw?: string | null): string {
+    if (!raw) return "";
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
   React.useEffect(() => {
     if (!authToken) {
       setTransactions([]);
@@ -868,7 +878,7 @@ export default function App() {
             category: t.category_name ?? "",
             subcategory: undefined,
             amount: Number(t.amount),
-            date: t.tx_date,
+            date: toDateInputValue(t.tx_date),
             description: t.description ?? "",
             walletId: t.wallet_id,
           }))
@@ -1025,33 +1035,6 @@ export default function App() {
       console.error("updateSettingsApi locale error:", err);
     });
   };
-  // const handleUpdateBudget = async (newBudget: Budget) => {
-  //   try {
-  //     const updated = await updateCurrentBudgetApi({
-  //       limitAmount: newBudget.monthlyLimit,
-  //       alertThreshold: newBudget.warningThreshold,
-  //       notifyInApp: newBudget.notificationsEnabled,
-  //       notifyEmail: newBudget.emailNotificationsEnabled,
-  //     });
-
-  //     setBudget({
-  //       id: updated.id.toString(),
-  //       monthlyLimit: updated.limitAmount,
-  //       warningThreshold: updated.alertThreshold as 70 | 80 | 90 | 100,
-  //       notificationsEnabled: updated.notifyInApp,
-  //       emailNotificationsEnabled: updated.notifyEmail,
-  //     });
-
-  //     toast.success("Cập nhật ngân sách thành công!");
-  //   } catch (err) {
-  //     console.error("updateCurrentBudgetApi error:", err);
-  //     toast.error(
-  //       err instanceof Error
-  //         ? err.message
-  //         : "Không thể cập nhật ngân sách. Vui lòng thử lại."
-  //     );
-  //   }
-  // };
 
   //Hết thêm
   const renderScreen = () => {
@@ -1075,37 +1058,6 @@ export default function App() {
             onAuthSuccess={handleAuthSuccess}
           />
         );
-
-      // case "auth":
-      //   return (
-      //     <AuthScreen
-      //       mode={authMode}
-      //       onModeChange={setAuthMode}
-      //       onSignInSuccess={(userData) => {
-      //         // sau này thay bằng data trả từ backend
-      //         setUser((prev) => ({
-      //           ...prev,
-      //           email: userData.email,
-      //           fullName: userData.fullName || prev.fullName,
-      //           phoneNumber: userData.phoneNumber || prev.phoneNumber,
-      //           bio: userData.bio ?? prev.bio,
-      //           profilePicture: userData.profilePicture || prev.profilePicture,
-      //         }));
-      //         setCurrentScreen("home");
-      //       }}
-      //       onSignUpSuccess={(userData) => {
-      //         setUser((prev) => ({
-      //           ...prev,
-      //           fullName: userData.fullName,
-      //           email: userData.email,
-      //           phoneNumber: userData.phoneNumber || "",
-      //           bio: userData.bio ?? "",
-      //           profilePicture: userData.profilePicture,
-      //         }));
-      //         setCurrentScreen("complete-profile");
-      //       }}
-      //     />
-      //   );
 
       case "complete-profile":
         return (
@@ -1360,6 +1312,7 @@ export default function App() {
 
       {/* Toast Notifications */}
       <Toaster />
+      <ChatbotWidget />
     </div>
   );
 }
