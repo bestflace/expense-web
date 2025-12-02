@@ -735,14 +735,28 @@ export default function App() {
     }
   };
 
-  const totalIncome = transactions
+  // 🔹 Chỉ lấy giao dịch của THÁNG HIỆN TẠI
+  const now = new Date();
+  const currentMonth = now.getMonth(); // 0..11
+  const currentYear = now.getFullYear();
+
+  const monthlyTransactions = transactions.filter((t) => {
+    const d = new Date(t.date);
+    if (Number.isNaN(d.getTime())) return false;
+
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  });
+
+  // Thu nhập / chi tiêu THÁNG NÀY
+  const totalIncome = monthlyTransactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-  const totalExpenses = transactions
+  const totalExpenses = monthlyTransactions
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
+  // "Tổng số dư" = chênh lệch THU – CHI của THÁNG NÀY
   const balance = totalIncome - totalExpenses;
 
   React.useEffect(() => {
