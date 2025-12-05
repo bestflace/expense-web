@@ -151,9 +151,10 @@ export default function ChatbotWidget() {
             display: "flex",
             flexDirection: "column",
             borderRadius: "1.5rem",
-            backgroundColor: "#ffffff",
+            backgroundColor: "var(--card)",
+            color: "var(--card-foreground)",
             boxShadow: "0 25px 50px -12px rgba(0,0,0,0.35)",
-            border: "1px solid rgba(148,163,184,0.6)",
+            border: "1px solid var(--border)",
             zIndex: 9999,
             overflow: "hidden",
           }}
@@ -166,7 +167,7 @@ export default function ChatbotWidget() {
               alignItems: "center",
               justifyContent: "space-between",
               background:
-                "linear-gradient(to right, #030213, #111827, #111827)",
+                "linear-gradient(to right, #49a778ff, #0c5d2cff, #0f533cff)",
               color: "#fff",
             }}
           >
@@ -179,7 +180,7 @@ export default function ChatbotWidget() {
                   height: "2.25rem",
                   borderRadius: "0.75rem",
                   border: "1px solid rgba(255,255,255,0.25)",
-                  backgroundColor: "rgba(255,255,255,0.1)",
+                  backgroundColor: "rgba(0, 191, 102, 1)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -230,7 +231,7 @@ export default function ChatbotWidget() {
           </div>
 
           {/* SUGGESTIONS – UI cũ, 4 pill / 4 hàng + mũi tên thu gọn */}
-          <div className="px-4 pt-3 pb-2 border-b border-gray-800/70 bg-black/20">
+          <div className="px-4 pt-3 pb-2 border-b border-gray-800/70 bg-black/20 rounded-b-2xl">
             {/* Hàng tiêu đề: Bạn có thể hỏi + nút mũi tên */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs text-gray-300">
@@ -284,7 +285,7 @@ export default function ChatbotWidget() {
             style={{
               flex: 1,
               padding: "0.75rem 1rem",
-              backgroundColor: "#f9fafb", // trắng ngà
+              backgroundColor: "var(--background)", // trắng ngà
               overflowY: "auto",
             }}
           >
@@ -306,8 +307,12 @@ export default function ChatbotWidget() {
                       padding: "0.45rem 0.75rem",
                       fontSize: "0.875rem",
                       lineHeight: 1.5,
-                      backgroundColor: "#030213", // đen giống button
-                      color: "#ffffff",
+                      backgroundColor: isUser
+                        ? "var(--primary)"
+                        : "var(--card)",
+                      color: isUser
+                        ? "var(--primary-foreground)"
+                        : "var(--card-foreground)",
                       boxShadow: "0 1px 3px rgba(15,23,42,0.35)",
                     }}
                   >
@@ -331,8 +336,8 @@ export default function ChatbotWidget() {
                     padding: "0.45rem 0.75rem",
                     fontSize: "0.875rem",
                     lineHeight: 1.5,
-                    backgroundColor: "#030213", // cùng màu bubble bot
-                    color: "#ffffff",
+                    backgroundColor: "var(--card)",
+                    color: "var(--card-foreground)",
                     boxShadow: "0 1px 3px rgba(15,23,42,0.35)",
                     display: "flex",
                     alignItems: "center",
@@ -372,8 +377,8 @@ export default function ChatbotWidget() {
             }}
             style={{
               padding: "0.75rem 1rem",
-              borderTop: "1px solid #e5e7eb",
-              backgroundColor: "#ffffff",
+              borderTop: "1px solid var(--border)",
+              backgroundColor: "var(--card)",
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
@@ -387,7 +392,9 @@ export default function ChatbotWidget() {
                 flex: 1,
                 height: "2.5rem",
                 borderRadius: "9999px",
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--border)",
+                backgroundColor: "var(--input-background)",
+                color: "var(--foreground)",
                 padding: "0 0.75rem",
                 fontSize: "0.875rem",
                 outline: "none",
@@ -401,7 +408,8 @@ export default function ChatbotWidget() {
                 padding: "0 1rem",
                 borderRadius: "9999px",
                 border: "none",
-                background: "linear-gradient(to right, #7c3aed, #ec4899)",
+                background:
+                  "linear-gradient(to right, #49a778ff, #0c5d2cff, #0f533cff)",
                 color: "#ffffff",
                 fontSize: "0.875rem",
                 fontWeight: 600,
@@ -434,7 +442,7 @@ export default function ChatbotWidget() {
             borderRadius: "9999px",
             border: "1px solid rgba(255,255,255,0.3)",
             background:
-              "linear-gradient(to top right, #7c3aed, #ec4899, #3b82f6)",
+              "linear-gradient(to top right, #7c3aed, #3fbb92ff, #3b82f6)",
             color: "#ffffff",
             display: "flex",
             alignItems: "center",

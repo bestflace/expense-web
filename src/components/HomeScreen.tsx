@@ -88,7 +88,7 @@ export function HomeScreen({
   };
 
   return (
-    <div className="h-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="h-full bg-background text-foreground">
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         {/* Header */}
         <motion.div
@@ -101,7 +101,10 @@ export function HomeScreen({
             <div className="flex flex-col gap-1">
               <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white">
                 Xin chào{" "}
-                <span className="font-bold text-blue-600 dark:text-blue-400">
+                <span
+                  className="text-3xl font-semibold"
+                  style={{ color: "#29c09fff" }}
+                >
                   {user.fullName || "bạn"}
                 </span>
               </h1>
@@ -283,7 +286,7 @@ export function HomeScreen({
                         <Button
                           onClick={onAddTransaction}
                           variant="ghost"
-                          className="text-blue-600 dark:text-blue-400"
+                          className="text-green-600 dark:text-green-400"
                         >
                           Thêm giao dịch đầu tiên
                         </Button>

@@ -156,12 +156,12 @@ export function AddCategoryModal({
     >
       <DialogContent
         className="
-      max-w-lg      /* ~512px, khá bự trên desktop */
-      w-full        /* chiếm hết phần cho phép */
-      max-h-[90vh]  /* cao tối đa 90% màn hình, không tràn */
-      mx-auto
-      flex flex-col
-    "
+    max-w-lg w-full max-h-[90vh] mx-auto flex flex-col
+    bg-card            /* dùng token card, đậm hơn background */
+    text-foreground
+    border border-slate-800
+    shadow-2xl
+  "
       >
         <DialogHeader className="shrink-0">
           <DialogTitle>

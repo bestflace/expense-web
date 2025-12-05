@@ -1267,7 +1267,7 @@ export default function App() {
 
       setShowBudgetSetup(false);
       navigate("home");
-      toast.success("Chào mừng đến với ExpenseTracker!", {
+      toast.success("Chào mừng đến với BudgetF", {
         description: "Thiết lập ngân sách hoàn tất",
       });
     } catch (err) {

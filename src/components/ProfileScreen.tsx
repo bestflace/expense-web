@@ -175,7 +175,7 @@ export function ProfileScreen({
   };
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
@@ -465,7 +465,7 @@ export function ProfileScreen({
       {/* Password Change Dialog */}
       {showPasswordDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-background rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-card rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6 border-b border-border">
               <h2 className="text-foreground">Đổi mật khẩu</h2>
             </div>
@@ -595,7 +595,7 @@ export function ProfileScreen({
       {/* Budget Dialog */}
       {showBudgetDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-background rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-card rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6 border-b border-border">
               <h2 className="text-foreground">Quản lý ngân sách tháng</h2>
             </div>

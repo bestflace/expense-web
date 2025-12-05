@@ -187,16 +187,40 @@ export function CategoriesScreen({
               setSelectedTab(value)
             }
           >
-            <TabsList className="grid w-full max-w-md grid-cols-2 h-12">
+            <TabsList
+              className="
+    grid w-full max-w-md grid-cols-2 h-12
+    rounded-full p-1
+    bg-gray-100
+    dark:bg-gray-800
+  "
+            >
               <TabsTrigger
                 value="expense"
-                className="text-red-600 data-[state=active]:bg-red-50 data-[state=active]:text-red-700"
+                className="
+      rounded-full
+      text-red-600 dark:text-red-300
+      data-[state=active]:bg-red-50
+      data-[state=active]:text-red-700
+      dark:data-[state=active]:bg-red-500/20
+      dark:data-[state=active]:text-red-100
+      transition-colors
+    "
               >
                 💸 Chi tiêu ({expenseCategories.length})
               </TabsTrigger>
+
               <TabsTrigger
                 value="income"
-                className="text-green-600 data-[state=active]:bg-green-50 data-[state=active]:text-green-700"
+                className="
+      rounded-full
+      text-green-600 dark:text-emerald-300
+      data-[state=active]:bg-green-50
+      data-[state=active]:text-green-700
+      dark:data-[state=active]:bg-emerald-500/20
+      dark:data-[state=active]:text-emerald-100
+      transition-colors
+    "
               >
                 💰 Thu nhập ({incomeCategories.length})
               </TabsTrigger>
