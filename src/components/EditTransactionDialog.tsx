@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, Trash2, Save } from "lucide-react";
 import { Transaction, Category } from "../App";
 import { ConfirmDialog } from "./ConfirmDialog";
+
 // Chuẩn hóa mọi kiểu string ngày (ISO, v.v.) thành "YYYY-MM-DD" cho <input type="date">
 function toDateInputValue(raw?: string): string {
   if (!raw) return "";
@@ -32,28 +33,75 @@ export function EditTransactionDialog({
   onClose,
 }: EditTransactionDialogProps) {
   const [type, setType] = useState<"income" | "expense">(transaction.type);
-  const [category, setCategory] = useState(transaction.category);
-  const [subcategory, setSubcategory] = useState(transaction.subcategory || "");
-  const [amount, setAmount] = useState(transaction.amount.toString());
-  const [description, setDescription] = useState(transaction.description);
-  const [walletId, setWalletId] = useState(transaction.walletId || "");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [category, setCategory] = useState<string>(transaction.category || "");
+  const [subcategory, setSubcategory] = useState<string>(
+    transaction.subcategory || ""
+  );
+  const [amount, setAmount] = useState<string>(transaction.amount.toString());
+  const [description, setDescription] = useState<string>(
+    transaction.description || ""
+  );
+  const [walletId, setWalletId] = useState<string>(transaction.walletId || "");
   const [date, setDate] = useState<string>(() =>
     toDateInputValue(transaction.date)
   );
-  const filteredCategories = categories.filter(
-    (c) => c.type === type && !c.parentCategoryId
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+
+  // 🔁 Mỗi khi transaction/cates thay đổi → sync lại state
+  useEffect(() => {
+    if (!transaction) return;
+
+    let catName = transaction.category || "";
+    let subName = transaction.subcategory || "";
+
+    // Nếu dữ liệu cũ chỉ lưu tên "danh mục con" ở transaction.category
+    // thì đổi thành: category = parent, subcategory = child
+    const catObj = categories.find((c) => c.name === catName);
+    if (catObj && catObj.parentCategoryId && !subName) {
+      const parent = categories.find((c) => c.id === catObj.parentCategoryId);
+      if (parent) {
+        catName = parent.name;
+        subName = catObj.name;
+      }
+    }
+
+    setType(transaction.type);
+    setCategory(catName);
+    setSubcategory(subName);
+    setAmount(transaction.amount.toString());
+    setDescription(transaction.description || "");
+    setWalletId(transaction.walletId || "");
+    setDate(toDateInputValue(transaction.date));
+  }, [transaction, categories]);
+
+  // Danh mục cha theo loại hiện tại
+  const filteredCategories = useMemo(
+    () => categories.filter((c) => c.type === type && !c.parentCategoryId),
+    [categories, type]
   );
 
-  const selectedCategoryObj = categories.find((c) => c.name === category);
-  const subcategories = selectedCategoryObj
-    ? categories.filter((c) => c.parentCategoryId === selectedCategoryObj.id)
-    : [];
+  // Danh mục cha đang chọn
+  const selectedCategoryObj = useMemo(
+    () => filteredCategories.find((c) => c.name === category),
+    [filteredCategories, category]
+  );
+
+  // Danh mục con của danh mục cha đang chọn
+  const subcategories = useMemo(
+    () =>
+      selectedCategoryObj
+        ? categories.filter(
+            (c) => c.parentCategoryId === selectedCategoryObj.id
+          )
+        : [],
+    [categories, selectedCategoryObj]
+  );
 
   const handleUpdate = () => {
     const parsedAmount = parseFloat(amount);
-    if (parsedAmount <= 0 || isNaN(parsedAmount)) {
+    if (parsedAmount <= 0 || Number.isNaN(parsedAmount)) {
       return;
     }
     setShowUpdateConfirm(true);
@@ -61,19 +109,37 @@ export function EditTransactionDialog({
 
   const confirmUpdate = () => {
     const parsedAmount = parseFloat(amount);
-    if (parsedAmount <= 0) {
+    if (parsedAmount <= 0 || Number.isNaN(parsedAmount)) {
       return;
+    }
+
+    // 🧠 Tìm categoryId chính xác để gửi lên backend
+    const parentCat = categories.find(
+      (c) => c.type === type && !c.parentCategoryId && c.name === category
+    );
+
+    let chosenCat = parentCat;
+
+    if (subcategory && parentCat) {
+      const subCat = categories.find(
+        (c) => c.name === subcategory && c.parentCategoryId === parentCat.id
+      );
+      if (subCat) {
+        chosenCat = subCat;
+      }
     }
 
     onUpdate({
       type,
-      category,
+      category: category || "",
       subcategory: subcategory || undefined,
+      categoryId: chosenCat?.id, // 👈 gửi thêm id để App.updateTransaction dùng
       amount: parsedAmount,
       date,
       description,
       walletId: walletId || undefined,
     });
+
     setShowUpdateConfirm(false);
     onClose();
   };

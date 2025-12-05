@@ -300,7 +300,7 @@ export default function App() {
 
     const merged: Transaction = { ...oldTransaction, ...updates };
 
-    // Check âm ví nếu là expense
+    // ✅ 1. Check âm ví nếu là expense (giữ nguyên logic cũ)
     if (merged.walletId && merged.type === "expense") {
       const wallet = wallets.find((w) => w.id === merged.walletId);
       if (wallet) {
@@ -327,20 +327,42 @@ export default function App() {
       }
     }
 
-    // tìm category id tương ứng tên (nếu user đổi category)
-    const cat = categories.find((c) => c.name === merged.category);
+    // ✅ 2. Resolve category: ƯU TIÊN categoryId, rồi đến subcategory, cuối cùng mới tới category
+    const resolveCategory = () => {
+      // ưu tiên id
+      if (merged.categoryId) {
+        const byId = categories.find((c) => c.id === merged.categoryId);
+        if (byId) return byId;
+      }
+
+      // nếu có subcategory -> tìm theo tên subcategory
+      if (merged.subcategory) {
+        const sub = categories.find((c) => c.name === merged.subcategory);
+        if (sub) return sub;
+      }
+
+      // fallback cuối cùng: tìm theo category (tên label chính)
+      if (merged.category) {
+        const cat = categories.find((c) => c.name === merged.category);
+        if (cat) return cat;
+      }
+
+      return undefined;
+    };
+
+    const cat = resolveCategory();
 
     try {
-      // Gửi đúng field backend
+      // ✅ 3. Gửi đúng category_id lên backend
       await updateTransactionApi(id, {
-        category_id: cat?.id, // nếu undefined thì COALESCE giữ nguyên category_id cũ
+        category_id: cat?.id ?? oldTransaction.categoryId, // nếu không resolve được thì giữ category cũ
         wallet_id: merged.walletId,
         amount: merged.amount,
         description: merged.description,
         tx_date: merged.date,
       });
 
-      // revert ví cũ nếu có
+      // ✅ 4. Revert ví cũ
       if (oldTransaction.walletId) {
         setWallets((prev) =>
           prev.map((w) => {
@@ -356,18 +378,45 @@ export default function App() {
         );
       }
 
-      // cập nhật state giao dịch
+      // ✅ 5. Build lại transaction mới + map category / subcategory cho đúng
+      let newCategory = merged.category;
+      let newSubcategory = merged.subcategory;
+      let newType: "income" | "expense" = merged.type;
+
+      if (cat) {
+        newType = cat.type as "income" | "expense";
+
+        if (cat.parentCategoryId) {
+          // là danh mục con → label chính = tên parent, subcategory = tên con
+          const parent = categories.find((c) => c.id === cat.parentCategoryId);
+          if (parent) {
+            newCategory = parent.name;
+            newSubcategory = cat.name;
+          } else {
+            // fallback: không tìm được parent thì xài luôn tên con
+            newCategory = cat.name;
+            newSubcategory = undefined;
+          }
+        } else {
+          // là danh mục cha/độc lập
+          newCategory = cat.name;
+          newSubcategory = undefined;
+        }
+      }
+
       const finalTransaction: Transaction = {
         ...merged,
-        type: cat?.type ?? merged.type,
-        category: cat?.name ?? merged.category,
+        categoryId: cat?.id ?? oldTransaction.categoryId,
+        category: newCategory,
+        subcategory: newSubcategory,
+        type: newType,
       };
 
       setTransactions((prev) =>
         prev.map((t) => (t.id === id ? finalTransaction : t))
       );
 
-      // apply transaction mới vào ví
+      // ✅ 6. Apply transaction mới vào ví
       if (finalTransaction.walletId) {
         setWallets((prev) =>
           prev.map((w) => {
@@ -536,13 +585,37 @@ export default function App() {
         )
       );
 
+      // 2️⃣ CẬP NHẬT MỌI GIAO DỊCH ĐANG DÙNG DANH MỤC NÀY
+      setTransactions((prev) =>
+        prev.map((tx) =>
+          // nếu bạn dùng field khác thì đổi `categoryId` cho đúng, ví dụ tx.category_id
+          tx.categoryId === id
+            ? {
+                ...tx,
+                category: updated.name, // tên hiển thị mới
+                type: updated.type, // nếu bạn dùng type từ category
+              }
+            : tx
+        )
+      );
       toast.success("Cập nhật danh mục thành công!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("updateCategoryApi error:", err);
+      const resp = err?.response?.data;
+
+      if (resp?.code === "CATEGORY_TYPE_HAS_TRANSACTIONS") {
+        toast.error("Không thể đổi loại danh mục", {
+          description:
+            "Danh mục này đang có giao dịch. Bạn không thể đổi từ thu nhập sang chi tiêu (hoặc ngược lại). Hãy tạo một danh mục mới.",
+        });
+        return;
+      }
+
       toast.error(
-        err instanceof Error
-          ? err.message
-          : "Không thể cập nhật danh mục. Vui lòng thử lại."
+        resp?.message ||
+          (err instanceof Error
+            ? err.message
+            : "Không thể cập nhật danh mục. Vui lòng thử lại.")
       );
     }
   };
@@ -908,7 +981,58 @@ export default function App() {
         );
       });
   }, [authToken]);
+  //Thêm
+  const reloadDataFromServer = React.useCallback(() => {
+    if (!authToken) return;
 
+    // Reload transactions
+    getTransactionsApi()
+      .then((data) => {
+        setTransactions(
+          data.map((t) => ({
+            id: String(t.transaction_id),
+            type: (t.category_type as "income" | "expense") ?? "expense",
+            category: t.category_name ?? "",
+            subcategory: undefined,
+            amount: Number(t.amount),
+            date: toDateInputValue(t.tx_date),
+            description: t.description ?? "",
+            walletId: t.wallet_id,
+          }))
+        );
+      })
+      .catch((err) => {
+        console.error("getTransactionsApi error (reload):", err);
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Không thể tải danh sách giao dịch từ server"
+        );
+      });
+
+    // Reload wallets
+    getWalletsApi()
+      .then((data) => {
+        setWallets(
+          data.map((w) => ({
+            id: w.id,
+            name: w.name,
+            balance: w.balance,
+            icon: w.icon,
+            color: w.color,
+            description: w.description,
+          }))
+        );
+      })
+      .catch((err) => {
+        console.error("getWalletsApi error (reload):", err);
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Không thể tải danh sách ví từ server"
+        );
+      });
+  }, [authToken]);
   // Categories
   React.useEffect(() => {
     if (!authToken) {
@@ -1104,6 +1228,7 @@ export default function App() {
               setEditingTransaction(transaction)
             }
             onNavigateToCategories={() => navigate("categories")}
+            onRefreshData={reloadDataFromServer}
           />
         );
       case "add-transaction":

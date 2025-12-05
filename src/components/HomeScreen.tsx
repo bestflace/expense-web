@@ -1,4 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
 import {
   Plus,
   Search,
@@ -6,12 +14,18 @@ import {
   ArrowDownLeft,
   FolderOpen,
   AlertTriangle,
+  Trash2,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent } from "./ui/card";
 import type { User, Transaction, Category, Budget } from "../App";
 import { motion, AnimatePresence } from "motion/react";
+import {
+  getDeletedTransactionsApi,
+  restoreTransactionApi,
+  forceDeleteTransactionApi,
+} from "../utils/api";
 
 interface HomeScreenProps {
   user: User;
@@ -24,7 +38,463 @@ interface HomeScreenProps {
   onAddTransaction: () => void;
   onEditTransaction: (transaction: Transaction) => void;
   onNavigateToCategories?: () => void;
+  onRefreshData?: () => void;
 }
+type TrashTransaction = {
+  transaction_id: string;
+  category_id: string;
+  wallet_id: string;
+  amount: number;
+  description: string | null;
+  tx_date: string;
+  deleted_at: string;
+  category_name: string;
+  category_type: "income" | "expense";
+  wallet_name: string;
+};
+
+interface TrashModalProps {
+  open: boolean;
+  onClose: () => void;
+  onRefreshData?: () => void;
+}
+
+const TrashModal: React.FC<TrashModalProps> = ({
+  open,
+  onClose,
+  onRefreshData,
+}) => {
+  const [items, setItems] = useState<TrashTransaction[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const [pendingAction, setPendingAction] = useState<null | {
+    type: "restore" | "delete";
+    txs: TrashTransaction[];
+  }>(null);
+
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const formatTrashAmount = (amount: number) =>
+    Number(amount).toLocaleString("vi-VN", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+
+  // Load giỏ rác mỗi lần mở modal
+  useEffect(() => {
+    if (!open) return;
+
+    setSelectedIds([]);
+    setPendingAction(null);
+    setLoading(true);
+
+    getDeletedTransactionsApi()
+      .then((data) => setItems(data))
+      .catch((err) => console.error("Lỗi load giỏ rác:", err))
+      .finally(() => setLoading(false));
+  }, [open]);
+
+  // ====== chọn nhiều ======
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAll = () => {
+    setSelectedIds((prev) =>
+      prev.length === items.length ? [] : items.map((t) => t.transaction_id)
+    );
+  };
+
+  const hasSelection = selectedIds.length > 0;
+  const allSelected = items.length > 0 && selectedIds.length === items.length;
+
+  // ====== mở modal xác nhận ======
+  const askRestore = (tx: TrashTransaction) =>
+    setPendingAction({ type: "restore", txs: [tx] });
+
+  const askDelete = (tx: TrashTransaction) =>
+    setPendingAction({ type: "delete", txs: [tx] });
+
+  const askRestoreSelected = () => {
+    const txs = items.filter((t) => selectedIds.includes(t.transaction_id));
+    if (!txs.length) return;
+    setPendingAction({ type: "restore", txs });
+  };
+
+  const askDeleteSelected = () => {
+    const txs = items.filter((t) => selectedIds.includes(t.transaction_id));
+    if (!txs.length) return;
+    setPendingAction({ type: "delete", txs });
+  };
+
+  // ====== xử lý confirm / cancel ======
+  const handleCancelAction = () => {
+    if (actionLoading) return;
+    setPendingAction(null);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return;
+    setActionLoading(true);
+
+    const { type, txs } = pendingAction;
+    const ids = txs.map((tx) => tx.transaction_id);
+
+    const api =
+      type === "restore" ? restoreTransactionApi : forceDeleteTransactionApi;
+
+    try {
+      const results = await Promise.all(
+        ids.map(async (id) => {
+          try {
+            await api(id);
+            return { id, ok: true as const };
+          } catch (error: any) {
+            return { id, ok: false as const, error };
+          }
+        })
+      );
+
+      const successIds = results.filter((r) => r.ok).map((r) => r.id);
+      const failed = results.filter((r) => !r.ok);
+
+      if (successIds.length) {
+        // xoá khỏi list + bỏ chọn
+        setItems((prev) =>
+          prev.filter((t) => !successIds.includes(t.transaction_id))
+        );
+        setSelectedIds((prev) => prev.filter((id) => !successIds.includes(id)));
+
+        onRefreshData?.();
+
+        toast.success(
+          type === "restore"
+            ? `Khôi phục ${successIds.length} giao dịch thành công`
+            : `Xóa ${successIds.length} giao dịch thành công`
+        );
+      }
+
+      if (failed.length) {
+        const firstError: any = (failed[0] as any).error;
+        const message =
+          firstError?.response?.data?.message ||
+          "Một số giao dịch không xử lý được. Vui lòng kiểm tra lại số dư ví hoặc thử lại sau.";
+        toast.error(message);
+      }
+
+      setPendingAction(null);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <>
+      {/* 🗑 MODAL CHÍNH */}
+      <Dialog
+        open={open}
+        onOpenChange={(isOpen: boolean) => {
+          if (!isOpen) onClose();
+        }}
+      >
+        <DialogContent
+          className="
+            sm:max-w-6xl w-[96vw] max-h-[90vh]
+            mx-auto flex flex-col
+            bg-card text-foreground
+            border border-slate-800
+            shadow-2xl
+          "
+        >
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-500 text-base shadow-sm">
+                🗑
+              </span>
+              <span>Giỏ rác giao dịch</span>
+            </DialogTitle>
+            <DialogDescription>
+              Khôi phục hoặc xoá vĩnh viễn các giao dịch đã xoá mềm.
+            </DialogDescription>
+          </DialogHeader>
+
+          {hasSelection && (
+            <div className="mb-3 flex items-center justify-between text-xs sm:text-sm text-slate-300">
+              <span>Đã chọn {selectedIds.length} giao dịch</span>
+              <div className="space-x-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full border-emerald-500/60 text-emerald-400 hover:bg-emerald-500/10"
+                  onClick={askRestoreSelected}
+                  disabled={loading}
+                >
+                  Khôi phục tất cả ({selectedIds.length})
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full border-rose-500/60 text-rose-400 hover:bg-rose-500/10"
+                  onClick={askDeleteSelected}
+                  disabled={loading}
+                >
+                  Xóa tất cả({selectedIds.length})
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-2 overflow-y-auto bf-chat-scroll pr-1">
+            {loading && (
+              <p className="text-sm text-muted-foreground">Đang tải...</p>
+            )}
+
+            {!loading && items.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Không có giao dịch nào trong giỏ rác.
+              </p>
+            )}
+
+            {!loading && items.length > 0 && (
+              <div className="overflow-x-auto rounded-xl border border-slate-700/70">
+                <table
+                  className="w-full text-[13px] bg-background"
+                  style={{ borderCollapse: "collapse" }}
+                >
+                  <thead className="sticky top-0 z-[1] bg-slate-900/95 backdrop-blur">
+                    <tr className="border-b border-slate-700">
+                      {/* checkbox chọn tất cả */}
+                      <th className="py-3 px-3 text-center bg-slate-900">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-emerald-500"
+                          checked={allSelected}
+                          onChange={toggleAll}
+                        />
+                      </th>
+                      <th className="py-3 px-4 text-left font-medium text-slate-300 bg-slate-900">
+                        Ngày
+                      </th>
+                      <th className="py-3 px-4 text-left font-medium text-slate-300 bg-slate-900">
+                        Mô tả
+                      </th>
+                      <th className="py-3 px-4 text-left font-medium text-slate-300 bg-slate-900">
+                        Danh mục
+                      </th>
+                      <th className="py-3 px-4 text-left font-medium text-slate-300 bg-slate-900">
+                        Ví
+                      </th>
+                      <th className="py-3 px-4 text-left font-medium text-slate-300 bg-slate-900">
+                        Số tiền
+                      </th>
+                      <th className="py-3 px-4 text-left font-medium text-slate-300 bg-slate-900">
+                        Đã xoá lúc
+                      </th>
+                      <th className="py-3 px-4 text-center font-medium text-slate-300 bg-slate-900">
+                        Thao tác
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((tx, idx) => (
+                      <tr
+                        key={tx.transaction_id}
+                        className={`
+                          border-t border-slate-800/90
+                          ${idx % 2 === 1 ? "bg-slate-900/40" : "bg-background"}
+                          hover:bg-slate-800/70 transition-colors
+                        `}
+                      >
+                        {/* checkbox từng dòng */}
+                        <td className="py-3 px-3 text-center">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-emerald-500"
+                            checked={selectedIds.includes(tx.transaction_id)}
+                            onChange={() => toggleOne(tx.transaction_id)}
+                          />
+                        </td>
+
+                        <td className="py-3 px-4 whitespace-nowrap text-slate-100">
+                          {new Date(tx.tx_date).toLocaleDateString("vi-VN")}
+                        </td>
+                        <td className="py-3 px-4 max-w-[260px] truncate text-slate-100">
+                          {tx.description || "(Không có mô tả)"}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap text-slate-100">
+                          {tx.category_name}{" "}
+                          <span className="text-xs text-slate-400">
+                            ({tx.category_type})
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap text-slate-100">
+                          {tx.wallet_name}
+                        </td>
+                        <td
+                          className={`py-3 px-4 text-right whitespace-nowrap ${
+                            tx.category_type === "income"
+                              ? "text-emerald-400"
+                              : "text-rose-400"
+                          }`}
+                        >
+                          {tx.category_type === "income" ? "+" : "-"}
+                          {formatTrashAmount(Math.abs(tx.amount))}₫
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap text-xs text-slate-400">
+                          {new Date(tx.deleted_at).toLocaleString("vi-VN")}
+                        </td>
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => askRestore(tx)}
+                            style={{
+                              backgroundColor: "#16a34a",
+                              color: "#ffffff",
+                              borderRadius: 9999,
+                              padding: "6px 14px",
+                              fontSize: "12px",
+                              fontWeight: 500,
+                              border: "1px solid #16a34a",
+                              marginRight: 8,
+                            }}
+                            className="inline-flex items-center justify-center shadow-sm hover:brightness-110 active:scale-95 transition"
+                          >
+                            Khôi phục
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => askDelete(tx)}
+                            style={{
+                              backgroundColor: "#fef2f2",
+                              color: "#b91c1c",
+                              borderRadius: 9999,
+                              padding: "6px 14px",
+                              fontSize: "12px",
+                              fontWeight: 500,
+                              border: "1px solid #fecaca",
+                            }}
+                            className="inline-flex items-center justify-center hover:brightness-105 active:scale-95 transition"
+                          >
+                            Xóa vĩnh viễn
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ✅ MODAL XÁC NHẬN */}
+      <Dialog
+        open={!!pendingAction}
+        onOpenChange={(isOpen: boolean) => {
+          if (!isOpen && !actionLoading) setPendingAction(null);
+        }}
+      >
+        <DialogContent
+          className="
+            sm:max-w-md w-[90vw] max-h-[90vh]
+            mx-auto flex flex-col
+            bg-card text-foreground
+            border border-slate-800
+            shadow-2xl
+          "
+        >
+          {pendingAction && (
+            <>
+              <DialogHeader className="shrink-0 text-center space-y-1">
+                <DialogTitle className="text-lg font-semibold">
+                  {pendingAction.type === "delete"
+                    ? pendingAction.txs.length > 1
+                      ? "Xóa vĩnh viễn các giao dịch"
+                      : "Xóa vĩnh viễn giao dịch"
+                    : pendingAction.txs.length > 1
+                    ? "Khôi phục các giao dịch"
+                    : "Khôi phục giao dịch"}
+                </DialogTitle>
+                <DialogDescription className="text-sm">
+                  {pendingAction.type === "delete"
+                    ? "Giao dịch sẽ bị xóa vĩnh viễn và không thể khôi phục."
+                    : "Giao dịch sẽ được khôi phục lại vào danh sách giao dịch của bạn."}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-3 overflow-y-auto bf-chat-scroll pr-1 text-center">
+                {pendingAction.txs.length === 1 ? (
+                  (() => {
+                    const tx = pendingAction.txs[0];
+                    return (
+                      <>
+                        <p className="font-medium text-foreground text-sm">
+                          {tx.description || "(Không có mô tả)"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {(tx.category_type === "income" ? "+" : "-") +
+                            formatTrashAmount(Math.abs(tx.amount))}
+                          ₫{" • "}
+                          {new Date(tx.tx_date).toLocaleDateString("vi-VN")}
+                        </p>
+                      </>
+                    );
+                  })()
+                ) : (
+                  <>
+                    <p className="font-medium text-foreground text-sm">
+                      {pendingAction.txs.length} giao dịch được chọn
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Ví dụ:{" "}
+                      <span className="font-medium">
+                        {pendingAction.txs[0].description || "(Không có mô tả)"}
+                      </span>{" "}
+                      và các giao dịch khác.
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <div className="flex space-x-3 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelAction}
+                  disabled={actionLoading}
+                  className="flex-1 rounded-xl"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={handleConfirmAction}
+                  className="flex-1 
+                    bg-gradient-to-br from-primary to-primary/80 
+                    text-primary-foreground 
+                    rounded-xl shadow-lg 
+                    hover:opacity-90 transition-colors"
+                >
+                  {actionLoading ? "Đang xử lý..." : "Xác nhận"}
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
 
 export function HomeScreen({
   user,
@@ -37,9 +507,10 @@ export function HomeScreen({
   onAddTransaction,
   onEditTransaction,
   onNavigateToCategories,
+  onRefreshData,
 }: HomeScreenProps) {
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [isTrashOpen, setIsTrashOpen] = useState(false);
   // Calculate monthly expenses
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
@@ -262,9 +733,20 @@ export function HomeScreen({
                   <h2 className="text-2xl text-gray-900 dark:text-white">
                     Giao dịch gần đây
                   </h2>
-                  <span className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-sm">
-                    {filteredTransactions.length} giao dịch
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-sm">
+                      {filteredTransactions.length} giao dịch
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1"
+                      onClick={() => setIsTrashOpen(true)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {/* <span>Giỏ rác</span> */}
+                    </Button>
+                  </div>
                 </div>
 
                 {filteredTransactions.length === 0 ? (
@@ -442,6 +924,11 @@ export function HomeScreen({
           </motion.div>
         </div>
       </div>
+      <TrashModal
+        open={isTrashOpen}
+        onClose={() => setIsTrashOpen(false)}
+        onRefreshData={onRefreshData}
+      />
     </div>
   );
 }

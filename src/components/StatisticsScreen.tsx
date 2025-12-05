@@ -125,42 +125,141 @@ export function StatisticsScreen({
   ).length;
 
   // Group by category for pie chart
-  const categoryData = categories
-    .map((category) => {
-      const categoryTransactions = filteredTransactions.filter(
-        (t) => t.category === category.name
-      );
-      const total = categoryTransactions.reduce(
-        (sum, t) => sum + Number(t.amount || 0),
-        0
-      );
+  // const categoryData = categories
+  //   .map((category) => {
+  //     const categoryTransactions = filteredTransactions.filter(
+  //       (t) => t.category === category.name
+  //     );
+  //     const total = categoryTransactions.reduce(
+  //       (sum, t) => sum + Number(t.amount || 0),
+  //       0
+  //     );
 
-      return {
-        name: category.name,
-        value: total,
-        color: category.color,
-        icon: category.icon,
-        type: category.type,
-      };
-    })
-    .filter((item) => item.value > 0);
+  //     return {
+  //       name: category.name,
+  //       value: total,
+  //       color: category.color,
+  //       icon: category.icon,
+  //       type: category.type,
+  //     };
+  //   })
+  //   .filter((item) => item.value > 0);
 
-  const expenseCategoryData = categoryData.filter(
+  // const expenseCategoryData = categoryData.filter(
+  //   (item) => item.type === "expense"
+  // );
+  // const incomeCategoryData = categoryData.filter(
+  //   (item) => item.type === "income"
+  // );
+  // // Tổng chi / thu theo nhóm danh mục (chỉ tính những danh mục có value > 0)
+  // const totalExpenseValue = expenseCategoryData.reduce(
+  //   (sum, item) => sum + item.value,
+  //   0
+  // );
+
+  // const totalIncomeValue = incomeCategoryData.reduce(
+  //   (sum, item) => sum + item.value,
+  //   0
+  // );
+  // 1) TÓM TẮT THEO TỪNG DANH MỤC (leaf) – dùng cho "Tóm tắt giao dịch theo danh mục"
+  const leafCategoryData = useMemo(() => {
+    return categories
+      .map((category) => {
+        const categoryTransactions = filteredTransactions.filter(
+          (t) => t.category === category.name
+        );
+        const total = categoryTransactions.reduce(
+          (sum, t) => sum + Number(t.amount || 0),
+          0
+        );
+
+        return {
+          name: category.name,
+          value: total,
+          color: category.color,
+          icon: category.icon,
+          type: category.type,
+        };
+      })
+      .filter((item) => item.value > 0);
+  }, [categories, filteredTransactions]);
+
+  const leafExpenseData = leafCategoryData.filter(
     (item) => item.type === "expense"
   );
-  const incomeCategoryData = categoryData.filter(
+  const leafIncomeData = leafCategoryData.filter(
     (item) => item.type === "income"
   );
-  // Tổng chi / thu theo nhóm danh mục (chỉ tính những danh mục có value > 0)
-  const totalExpenseValue = expenseCategoryData.reduce(
+
+  const totalExpenseSummary = leafExpenseData.reduce(
+    (sum, item) => sum + item.value,
+    0
+  );
+  const totalIncomeSummary = leafIncomeData.reduce(
     (sum, item) => sum + item.value,
     0
   );
 
-  const totalIncomeValue = incomeCategoryData.reduce(
-    (sum, item) => sum + item.value,
-    0
-  );
+  // 2) PHÂN BỔ PIE THEO NHÓM DANH MỤC CHA
+  const { pieExpenseData, pieIncomeData } = useMemo(() => {
+    // map id -> category, name -> category
+    const byId = new Map<string, Category>();
+    const byName = new Map<string, Category>();
+    categories.forEach((c) => {
+      byId.set(c.id, c);
+      byName.set(c.name, c);
+    });
+
+    type PieItem = {
+      name: string;
+      value: number;
+      color: string;
+      icon: string;
+      type: "income" | "expense";
+    };
+
+    const groupMap = new Map<string, PieItem>();
+
+    filteredTransactions.forEach((t) => {
+      const cat = byName.get(t.category);
+
+      // tìm category dùng để gom: nếu có parent => gom theo parent, nếu không => bản thân
+      let groupCat: Category | undefined;
+      if (cat) {
+        if (cat.parentCategoryId) {
+          const parent = byId.get(cat.parentCategoryId);
+          groupCat = parent || cat;
+        } else {
+          groupCat = cat;
+        }
+      }
+
+      const groupName = groupCat?.name || t.category;
+      const type = (groupCat?.type as "income" | "expense") || t.type;
+      const key = `${groupName}|${type}`;
+
+      const existing =
+        groupMap.get(key) ||
+        ({
+          name: groupName,
+          value: 0,
+          color: groupCat?.color || "#6B7280",
+          icon: groupCat?.icon || "💰",
+          type,
+        } as PieItem);
+
+      existing.value += Number(t.amount || 0);
+      groupMap.set(key, existing);
+    });
+
+    const all = Array.from(groupMap.values()).filter((i) => i.value > 0);
+
+    return {
+      pieExpenseData: all.filter((i) => i.type === "expense"),
+      pieIncomeData: all.filter((i) => i.type === "income"),
+    };
+  }, [categories, filteredTransactions]);
+
   // Monthly comparison data for the selected year
   const monthlyComparisonData = useMemo(() => {
     const yearTransactions = transactions.filter(
@@ -413,11 +512,11 @@ export function StatisticsScreen({
                 <CardTitle>Phân bổ chi tiêu</CardTitle>
               </CardHeader>
               <CardContent>
-                {expenseCategoryData.length > 0 ? (
+                {pieExpenseData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
-                        data={expenseCategoryData}
+                        data={pieExpenseData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -428,8 +527,8 @@ export function StatisticsScreen({
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {expenseCategoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        {pieExpenseData.map((entry, index) => (
+                          <Cell key={`cell-exp-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -451,11 +550,11 @@ export function StatisticsScreen({
                 <CardTitle>Phân bổ thu nhập</CardTitle>
               </CardHeader>
               <CardContent>
-                {incomeCategoryData.length > 0 ? (
+                {pieIncomeData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
-                        data={incomeCategoryData}
+                        data={pieIncomeData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -466,8 +565,8 @@ export function StatisticsScreen({
                         fill="#82ca9d"
                         dataKey="value"
                       >
-                        {incomeCategoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        {pieIncomeData.map((entry, index) => (
+                          <Cell key={`cell-inc-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -513,6 +612,7 @@ export function StatisticsScreen({
           </Card>
 
           {/* Transaction Summary Table */}
+          {/* Transaction Summary Table */}
           <Card>
             <CardHeader>
               <CardTitle>Tóm tắt giao dịch theo danh mục</CardTitle>
@@ -520,7 +620,7 @@ export function StatisticsScreen({
             <CardContent>
               <div className="space-y-8">
                 {/* Expense Categories */}
-                {expenseCategoryData.length > 0 && (
+                {leafExpenseData.length > 0 && (
                   <div>
                     <h3 className="text-lg text-red-600 dark:text-red-400 mb-4">
                       📊 Chi tiêu
@@ -544,12 +644,12 @@ export function StatisticsScreen({
                           </tr>
                         </thead>
                         <tbody>
-                          {expenseCategoryData
+                          {leafExpenseData
                             .sort((a, b) => b.value - a.value)
                             .map((cat) => {
                               const percentage =
-                                totalExpenseValue > 0
-                                  ? (cat.value / totalExpenseValue) * 100
+                                totalExpenseSummary > 0
+                                  ? (cat.value / totalExpenseSummary) * 100
                                   : 0;
                               const count = filteredTransactions.filter(
                                 (t) =>
@@ -597,7 +697,7 @@ export function StatisticsScreen({
                               {expenseCount}
                             </td>
                             <td className="text-right py-3 px-4 text-red-600 dark:text-red-400">
-                              {formatAmount(totalExpenseValue)}
+                              {formatAmount(totalExpenseSummary)}
                             </td>
                             <td className="text-right py-3 px-4 text-gray-600 dark:text-gray-400">
                               100%
@@ -610,7 +710,7 @@ export function StatisticsScreen({
                 )}
 
                 {/* Income Categories */}
-                {incomeCategoryData.length > 0 && (
+                {leafIncomeData.length > 0 && (
                   <div>
                     <h3 className="text-lg text-green-600 dark:text-green-400 mb-4">
                       💰 Thu nhập
@@ -634,12 +734,12 @@ export function StatisticsScreen({
                           </tr>
                         </thead>
                         <tbody>
-                          {incomeCategoryData
+                          {leafIncomeData
                             .sort((a, b) => b.value - a.value)
                             .map((cat) => {
                               const percentage =
-                                totalIncomeValue > 0
-                                  ? (cat.value / totalIncomeValue) * 100
+                                totalIncomeSummary > 0
+                                  ? (cat.value / totalIncomeSummary) * 100
                                   : 0;
                               const count = filteredTransactions.filter(
                                 (t) =>
@@ -686,7 +786,7 @@ export function StatisticsScreen({
                               {incomeCount}
                             </td>
                             <td className="text-right py-3 px-4 text-green-600 dark:text-green-400">
-                              {formatAmount(totalIncomeValue)}
+                              {formatAmount(totalIncomeSummary)}
                             </td>
                             <td className="text-right py-3 px-4 text-gray-600 dark:text-gray-400">
                               100%
@@ -699,8 +799,8 @@ export function StatisticsScreen({
                 )}
 
                 {/* No data message */}
-                {expenseCategoryData.length === 0 &&
-                  incomeCategoryData.length === 0 && (
+                {leafExpenseData.length === 0 &&
+                  leafIncomeData.length === 0 && (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                       Không có dữ liệu giao dịch
                     </div>

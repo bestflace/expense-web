@@ -39,14 +39,16 @@ export function BottomNavigation({
           <motion.div
             whileHover={{ scale: 1.1 }}
             transition={{ type: "spring", stiffness: 300, damping: 18 }}
-            className="w-12 h-12 bg-gradient-to-br from-yellow-500 via-orange-600 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
+            className="w-12 h-12 bg-gradient-to-br from-green-400 via-green-500 to-green-600
+             rounded-xl flex items-center justify-center shadow-lg"
           >
             <img
               src={BudgetFLogo}
               alt="BudgetF logo"
-              className="w-10 h-10 rounded-xl object-cover"
+              className="w-8 h-8 rounded-xl object-cover"
             />
           </motion.div>
+
           <div>
             <h1
               className="text-xl font-semibold"

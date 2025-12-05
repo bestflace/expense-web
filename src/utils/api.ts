@@ -264,6 +264,31 @@ export async function deleteTransactionApi(id: string) {
     method: "DELETE",
   });
 }
+// 🔹 GIAO DỊCH ĐÃ XOÁ MỀM (GIỎ RÁC)
+export type TrashTransactionApi = TransactionApi & {
+  deleted_at: string;
+  category_name: string;
+  category_type: "income" | "expense";
+  wallet_name: string;
+};
+
+export async function getDeletedTransactionsApi() {
+  return request<TrashTransactionApi[]>("/api/transactions/trash", {
+    method: "GET",
+  });
+}
+
+export async function restoreTransactionApi(id: string) {
+  return request<null>(`/api/transactions/${id}/restore`, {
+    method: "POST",
+  });
+}
+
+export async function forceDeleteTransactionApi(id: string) {
+  return request<null>(`/api/transactions/${id}/force`, {
+    method: "DELETE",
+  });
+}
 
 /* ---------- CATEGORIES ---------- */
 
@@ -342,7 +367,6 @@ export async function updateCurrentBudgetApi(payload: {
     body: JSON.stringify(payload),
   });
 }
-/* 🔻 THÊM 2 HÀM NÀY CHO LỊCH SỬ + TRUNG TÂM CẢNH BÁO */
 
 // (option) GET /api/budgets/history?months=6
 export type BudgetHistoryItemApi = BudgetApi;
