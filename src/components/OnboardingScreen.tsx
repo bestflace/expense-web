@@ -8,42 +8,44 @@ interface OnboardingScreenProps {
   language: "vi" | "en";
 }
 
+type Slide = {
+  title: string;
+  description: string;
+  icon?: string;
+};
+
 export function OnboardingScreen({
   onComplete,
   language,
 }: OnboardingScreenProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const slides =
+  const slides: Slide[] =
     language === "vi"
       ? [
           {
             title: "Chào mừng đến với BudgetF",
             description:
               "Giải pháp quản lý tài chính cá nhân toàn diện, giúp bạn kiểm soát chi tiêu và đạt mục tiêu tài chính.",
-            icon: "💰",
-            gradient: "from-blue-500 to-indigo-600",
+            // icon: "🌠",
           },
           {
-            title: "Theo dõi chi tiêu thông minh",
+            title: "Theo dõi thu chi thông minh",
             description:
               "Ghi chú mọi khoản thu chi, phân loại theo danh mục và ví riêng biệt. Dễ dàng quản lý từng đồng tiền.",
-            icon: "📊",
-            gradient: "from-purple-500 to-pink-600",
+            // icon: "🧾💸",
           },
           {
             title: "Thống kê trực quan",
             description:
               "Biểu đồ chi tiết, báo cáo tháng/năm và xuất Excel. Hiểu rõ thói quen chi tiêu của bạn.",
-            icon: "📈",
-            gradient: "from-green-500 to-emerald-600",
+            // icon: "📊✨",
           },
           {
             title: "Cảnh báo ngân sách",
             description:
               "Đặt hạn mức chi tiêu hàng tháng và nhận thông báo khi vượt ngưỡng. Kiểm soát tài chính hiệu quả.",
-            icon: "🔔",
-            gradient: "from-orange-500 to-red-600",
+            // icon: "⚠️🔔",
           },
         ]
       : [
@@ -51,74 +53,84 @@ export function OnboardingScreen({
             title: "Welcome to BudgetF",
             description:
               "Comprehensive personal finance solution to help you control spending and achieve financial goals.",
-            icon: "💰",
-            gradient: "from-blue-500 to-indigo-600",
+            icon: "🌠",
           },
           {
             title: "Smart Expense Tracking",
             description:
               "Record all transactions, categorize by type and wallet. Easily manage every penny.",
-            icon: "📊",
-            gradient: "from-purple-500 to-pink-600",
+            icon: "🧾💸",
           },
           {
             title: "Visual Statistics",
             description:
               "Detailed charts, monthly/yearly reports and Excel export. Understand your spending habits.",
-            icon: "📈",
-            gradient: "from-green-500 to-emerald-600",
+            icon: "📊✨",
           },
           {
             title: "Budget Alerts",
             description:
               "Set monthly spending limits and receive notifications when exceeding threshold. Control finances effectively.",
-            icon: "🔔",
-            gradient: "from-orange-500 to-red-600",
+            icon: "⚠️🔔",
           },
         ];
 
+  // ✅ gradient cho từng slide (header)
+  const headerBg: string[] = [
+    "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #6d28d9 100%)",
+    "linear-gradient(135deg, #d946ef 0%, #ec4899 50%, #f43f5e 100%)",
+    "linear-gradient(135deg, #10b981 0%, #0d9488 50%, #15803d 100%)",
+    "linear-gradient(135deg, #f59e0b 0%, #ea580c 55%, #e11d48 100%)",
+  ];
+
+  // ✅ LẤY ĐÚNG GRADIENT THEO SLIDE HIỆN TẠI
+  const currentGradient = headerBg[currentSlide];
+
+  // (tuỳ chọn) gradient mềm cho dots
+  const currentGradientSoft = headerBg[currentSlide].replace("135deg", "90deg");
+
   const handleNext = () => {
-    if (currentSlide < slides.length - 1) {
-      setCurrentSlide(currentSlide + 1);
-    } else {
-      onComplete();
-    }
+    if (currentSlide < slides.length - 1) setCurrentSlide((s) => s + 1);
+    else onComplete();
   };
 
   const handlePrevious = () => {
-    if (currentSlide > 0) {
-      setCurrentSlide(currentSlide - 1);
-    }
+    if (currentSlide > 0) setCurrentSlide((s) => s - 1);
   };
 
-  const currentSlideData = slides[currentSlide];
+  const current = slides[currentSlide];
   const isLastSlide = currentSlide === slides.length - 1;
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-6">
-      <div className="max-w-4xl w-full">
-        {/* Main Content */}
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4 sm:p-6 md:p-8 pb-10">
+      <div className="w-full max-w-6xl">
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden"
+          transition={{ duration: 0.55, ease: "easeOut" }}
+          className="bg-white/90 dark:bg-gray-900/85 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/60 dark:border-white/10"
         >
-          {/* Slide Content */}
+          {/* HEADER */}
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide}
-              initial={{ opacity: 0, x: 100 }}
+              initial={{ opacity: 0, x: 120 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ duration: 0.4 }}
-              className={`bg-gradient-to-br ${currentSlideData.gradient} p-12 text-white relative overflow-hidden`}
+              exit={{ opacity: 0, x: -120 }}
+              transition={{ duration: 0.45, ease: "easeInOut" }}
+              className="relative px-6 sm:px-10 md:px-14 py-12 md:py-16 text-white"
+              style={{
+                minHeight: "46vh",
+                background: currentGradient,
+              }}
             >
+              {/* overlay */}
+              <div className="absolute inset-0 bg-black/10" />
+
+              {/* pattern sao */}
               <motion.div
-                className="absolute inset-0 opacity-10"
-                animate={{
-                  backgroundPosition: ["0% 0%", "100% 100%"],
-                }}
+                className="absolute inset-0 opacity-15"
+                animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
                 transition={{
                   duration: 20,
                   repeat: Infinity,
@@ -126,90 +138,106 @@ export function OnboardingScreen({
                 }}
                 style={{
                   backgroundImage:
-                    "radial-gradient(circle, white 1px, transparent 1px)",
-                  backgroundSize: "50px 50px",
+                    "radial-gradient(circle at 1px 1px, white 1px, transparent 1px)",
+                  backgroundSize: "48px 48px",
                 }}
               />
 
-              <div className="max-w-2xl mx-auto text-center space-y-6 relative z-10">
+              <div className="relative z-10 max-w-3xl mx-auto text-center space-y-6">
+                {/* icon badge */}
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
-                  transition={{
-                    scale: { duration: 0.5 },
-                    rotate: { duration: 2, repeat: Infinity, repeatDelay: 1 },
-                  }}
-                  className="text-8xl mb-6"
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, ease: "backOut" }}
+                  className="mx-auto w-fit"
                 >
-                  {currentSlideData.icon}
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{
+                      duration: 3.2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="rounded-3xl bg-white/15 backdrop-blur-md px-7 py-6 md:px-9 md:py-7 shadow-[0_12px_50px_rgba(0,0,0,0.25)]"
+                  >
+                    <div className="text-6xl md:text-7xl lg:text-8xl">
+                      {current.icon}
+                    </div>
+                  </motion.div>
                 </motion.div>
 
                 <motion.h1
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-4xl md:text-5xl mb-4"
+                  transition={{ delay: 0.12 }}
+                  className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight drop-shadow-sm"
                 >
-                  {currentSlideData.title}
+                  {current.title}
                 </motion.h1>
 
                 <motion.p
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-xl md:text-2xl text-white/90"
+                  transition={{ delay: 0.2 }}
+                  className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed drop-shadow-sm"
                 >
-                  {currentSlideData.description}
+                  {current.description}
                 </motion.p>
               </div>
             </motion.div>
           </AnimatePresence>
 
-          {/* Controls */}
-          <div className="bg-white dark:bg-gray-800 p-8">
-            {/* Progress Dots */}
-            <div className="flex justify-center gap-2 mb-8">
-              {slides.map((_, index) => (
-                <motion.button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  className={`h-2 rounded-full transition-all ${
-                    index === currentSlide
-                      ? "w-8 bg-gradient-to-r from-blue-500 to-indigo-600"
-                      : "w-2 bg-gray-300 dark:bg-gray-600"
-                  }`}
-                />
-              ))}
+          {/* CONTROLS */}
+          <div className="bg-white dark:bg-gray-900 px-5 sm:px-8 md:px-10 py-6 md:py-8">
+            {/* dots đổi màu theo slide */}
+            <div className="flex justify-center gap-2.5 mb-6">
+              {slides.map((_, index) => {
+                const active = index === currentSlide;
+                return (
+                  <motion.button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    whileHover={{ scale: 1.15 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`h-2.5 rounded-full transition-all ${
+                      active ? "w-9 shadow-md" : "w-2.5 bg-muted"
+                    }`}
+                    style={
+                      active ? { background: currentGradientSoft } : undefined
+                    }
+                  />
+                );
+              })}
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              {/* Previous */}
               <motion.div
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                className="flex-1"
               >
                 <Button
                   onClick={handlePrevious}
                   variant="outline"
                   disabled={currentSlide === 0}
-                  className="w-full h-14 text-lg border-2"
+                  className="w-full h-12 md:h-14 text-base md:text-lg border-2 rounded-xl
+                             border-input bg-background text-foreground
+                             hover:bg-accent hover:text-accent-foreground"
                 >
                   <ChevronLeft className="w-5 h-5 mr-2" />
                   {language === "vi" ? "Quay lại" : "Previous"}
                 </Button>
               </motion.div>
 
+              {/* Next / Get started đổi màu theo slide */}
               <motion.div
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ scale: 1.01, filter: "brightness(0.96)" }}
                 whileTap={{ scale: 0.98 }}
-                className="flex-1"
               >
                 <Button
                   onClick={handleNext}
-                  className="w-full h-14 text-lg bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 hover:from-blue-600 hover:via-indigo-700 hover:to-purple-700 shadow-lg"
+                  className="w-full h-12 md:h-14 text-base md:text-lg rounded-xl text-white shadow-lg"
+                  style={{ background: currentGradient }}
                 >
                   {isLastSlide
                     ? language === "vi"
@@ -223,35 +251,25 @@ export function OnboardingScreen({
               </motion.div>
             </div>
 
-            {/* Skip Button */}
-            <AnimatePresence>
-              {!isLastSlide && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-center mt-6"
+            {!isLastSlide && (
+              <div className="text-center mt-4">
+                <button
+                  onClick={onComplete}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={onComplete}
-                    className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-                  >
-                    {language === "vi" ? "Bỏ qua" : "Skip"}
-                  </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {language === "vi" ? "Bỏ qua" : "Skip"}
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
 
-        {/* App Info */}
+        {/* FOOTER */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-center mt-8 text-gray-600 dark:text-gray-400"
+          transition={{ delay: 0.35 }}
+          className="text-center mt-8 md:mt-10 text-gray-600 dark:text-gray-400"
         >
           <p className="text-sm">BudgetF v1.0.0</p>
           <p className="text-xs mt-1">

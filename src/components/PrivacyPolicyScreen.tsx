@@ -315,6 +315,7 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
                 </p>
                 <p>
                   <strong>Địa chỉ:</strong> Trường Đại học Công nghệ Thông tin,
+                  ĐHQG-HCM
                 </p>
                 <p>
                   <strong>Phone:</strong> +84 987 012 617

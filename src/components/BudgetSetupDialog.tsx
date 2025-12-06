@@ -29,8 +29,8 @@ export function BudgetSetupDialog({ onComplete }: BudgetSetupDialogProps) {
       <div className="bg-background rounded-lg shadow-xl max-w-md w-full">
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="w-10 h-10 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-primary" />
             </div>
             <div>
               <h2 className="text-foreground">Thiết lập ngân sách</h2>
@@ -42,10 +42,10 @@ export function BudgetSetupDialog({ onComplete }: BudgetSetupDialogProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="space-y-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+          <div className="space-y-4 bg-primary/10 dark:bg-primary/15 rounded-lg p-4 border border-primary/20 dark:border-primary/30">
             <div className="flex items-start gap-2">
-              <Bell className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-1 flex-shrink-0" />
-              <p className="text-sm text-blue-900 dark:text-blue-100">
+              <Bell className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+              <p className="text-sm text-foreground">
                 Thiết lập ngân sách hàng tháng để theo dõi chi tiêu của bạn. Bạn
                 sẽ nhận được cảnh báo khi chi tiêu vượt quá ngưỡng bạn đã chọn.
               </p>
@@ -64,7 +64,7 @@ export function BudgetSetupDialog({ onComplete }: BudgetSetupDialogProps) {
                 value={monthlyLimit}
                 onChange={(e) => setMonthlyLimit(e.target.value)}
                 placeholder="2000000"
-                className="pl-10 h-12"
+                className="pl-10 h-12 border-border focus-visible:ring-primary/40 focus-visible:border-primary"
                 required
               />
             </div>
@@ -82,13 +82,17 @@ export function BudgetSetupDialog({ onComplete }: BudgetSetupDialogProps) {
               }
             >
               <div className="space-y-2">
-                <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:bg-accent transition-colors">
-                  <RadioGroupItem value="70" id="threshold-70" />
+                <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:bg-primary/5 transition-colors">
+                  <RadioGroupItem
+                    value="70"
+                    id="threshold-70"
+                    className="border-primary text-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                  />
                   <Label
                     htmlFor="threshold-70"
                     className="flex-1 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <span>70%</span>
                       <span className="text-xs text-muted-foreground">
                         Cảnh báo sớm
@@ -98,12 +102,16 @@ export function BudgetSetupDialog({ onComplete }: BudgetSetupDialogProps) {
                 </div>
 
                 <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:bg-accent transition-colors">
-                  <RadioGroupItem value="80" id="threshold-80" />
+                  <RadioGroupItem
+                    value="80"
+                    id="threshold-80 "
+                    className="border-primary text-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                  />
                   <Label
                     htmlFor="threshold-80"
                     className="flex-1 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <span>80%</span>
                       <span className="text-xs text-muted-foreground">
                         Khuyên dùng
@@ -113,12 +121,16 @@ export function BudgetSetupDialog({ onComplete }: BudgetSetupDialogProps) {
                 </div>
 
                 <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:bg-accent transition-colors">
-                  <RadioGroupItem value="90" id="threshold-90" />
+                  <RadioGroupItem
+                    value="90"
+                    id="threshold-90"
+                    className="border-primary text-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                  />
                   <Label
                     htmlFor="threshold-90"
                     className="flex-1 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <span>90%</span>
                       <span className="text-xs text-muted-foreground">
                         Cảnh báo muộn
@@ -128,12 +140,16 @@ export function BudgetSetupDialog({ onComplete }: BudgetSetupDialogProps) {
                 </div>
 
                 <div className="flex items-center space-x-2 p-3 border border-border rounded-lg hover:bg-accent transition-colors">
-                  <RadioGroupItem value="100" id="threshold-100" />
+                  <RadioGroupItem
+                    value="100"
+                    id="threshold-100"
+                    className="border-primary text-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                  />
                   <Label
                     htmlFor="threshold-100"
                     className="flex-1 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <span>100%</span>
                       <span className="text-xs text-muted-foreground">
                         Chỉ khi vượt quá
@@ -151,7 +167,7 @@ export function BudgetSetupDialog({ onComplete }: BudgetSetupDialogProps) {
 
           <Button
             type="submit"
-            className="w-full h-12 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+            className="w-full h-12 bg-gradient-to-r from-primary to-emerald-600 hover:from-primary hover:to-green-600 text-primary-foreground font-semibold"
           >
             Hoàn tất thiết lập
           </Button>

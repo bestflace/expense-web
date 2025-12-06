@@ -215,7 +215,7 @@ const TrashModal: React.FC<TrashModalProps> = ({
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-500 text-base shadow-sm">
-                🗑
+                ♻️
               </span>
               <span>Giỏ rác giao dịch</span>
             </DialogTitle>

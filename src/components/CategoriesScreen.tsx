@@ -239,7 +239,12 @@ export function CategoriesScreen({
                       <Button
                         onClick={() => setIsAddModalOpen(true)}
                         variant="outline"
-                        className="text-blue-600 dark:text-blue-400"
+                        className="
+    border-primary text-primary 
+    hover:bg-primary/10 hover:text-primary 
+    dark:border-primary dark:text-primary 
+    dark:hover:bg-primary/15
+  "
                       >
                         Thêm danh mục đầu tiên
                       </Button>

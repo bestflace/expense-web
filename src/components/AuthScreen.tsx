@@ -136,7 +136,7 @@ function ResetPasswordScreen({
       >
         <motion.div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-200/50 dark:border-gray-700/50">
           <div className="text-center mb-6">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-4xl">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-4xl">
               💳
             </div>
             <h1 className="text-2xl font-semibold mb-1">Nhập mã xác nhận</h1>
@@ -379,8 +379,8 @@ export function AuthScreen({
         >
           <motion.div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-gray-200/50 dark:border-gray-700/50">
             <div className="text-center mb-6">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-4xl">
-                💌
+              <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-4xl">
+                🔐
               </div>
               <h1 className="text-2xl font-semibold mb-1">Quên mật khẩu</h1>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -507,12 +507,13 @@ export function AuthScreen({
             transition={{ delay: 0.1 }}
           >
             <motion.div
-              className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg"
-              whileHover={{ scale: 1.05, rotate: 5 }}
+              className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+              whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <span className="text-4xl">💰</span>
+              <span className="text-4xl">🌏</span>
             </motion.div>
+
             <h1 className="text-3xl mb-2">
               {mode === "signin" ? "Đăng nhập" : "Đăng ký"}
             </h1>
@@ -605,7 +606,7 @@ export function AuthScreen({
                       setForgotEmail(formData.email);
                       setView("forgot-email");
                     }}
-                    className="text-purple-600 dark:text-purple-400 hover:underline transition-all"
+                    className="text-primary dark:text-green-400 hover:underline transition-all"
                   >
                     Quên mật khẩu?
                   </button>
@@ -684,7 +685,7 @@ export function AuthScreen({
                 onClick={() =>
                   onModeChange(mode === "signin" ? "signup" : "signin")
                 }
-                className="text-purple-600 dark:text-purple-400 hover:underline transition-all"
+                className="text-primary dark:text-green-400 hover:underline transition-all"
               >
                 {mode === "signin" ? "Đăng ký ngay" : "Đăng nhập"}
               </button>

@@ -654,13 +654,28 @@ export default function App() {
         prev.filter((c) => c.id !== id && c.parentCategoryId !== id)
       );
       toast.success("Xóa danh mục thành công!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("deleteCategoryApi error:", err);
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Không thể xóa danh mục. Vui lòng thử lại."
-      );
+
+      // Lấy message thô từ backend (nếu có)
+      const rawMessage: string =
+        err?.response?.data?.message ??
+        (err instanceof Error ? err.message : "");
+
+      // Bị lỗi khóa ngoại từ Postgres / backend
+      if (
+        rawMessage.includes("violates foreign key constraint") ||
+        rawMessage.includes("transactions_category_id_fkey")
+      ) {
+        toast.error("Không thể xóa danh mục", {
+          description:
+            "Không thể xóa danh mục vì tồn tại giao dịch đang sử dụng danh mục này. Vui lòng xóa hoặc cập nhật các giao dịch liên quan trước.",
+        });
+        return;
+      }
+
+      // Các lỗi khác
+      toast.error(rawMessage || "Không thể xóa danh mục. Vui lòng thử lại.");
     }
   };
 

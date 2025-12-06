@@ -476,11 +476,11 @@ export function ProfileScreen({
               </p>
 
               {/* Password Requirements */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <p className="text-sm text-blue-800 dark:text-blue-300 mb-2">
+              <div className="bg-primary/10 dark:bg-primary/15 border border-primary/20 dark:border-primary/30 rounded-lg p-4">
+                <p className="text-sm text-primary dark:text-primary mb-2 font-medium">
                   Yêu cầu mật khẩu mới:
                 </p>
-                <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                <ul className="text-sm text-foreground/80 dark:text-foreground/80 space-y-1">
                   <li className="flex items-center gap-2">
                     <span
                       className={
@@ -525,7 +525,7 @@ export function ProfileScreen({
               </div>
 
               <div>
-                <label className="block text-muted-foreground mb-2">
+                <label className="block text-foreground/80 mb-2 font-medium">
                   Mật khẩu hiện tại
                 </label>
                 <Input
@@ -538,7 +538,7 @@ export function ProfileScreen({
               </div>
 
               <div>
-                <label className="block text-muted-foreground mb-2">
+                <label className="block text-foreground/80 mb-2 font-medium">
                   Mật khẩu mới
                 </label>
                 <Input
@@ -551,7 +551,7 @@ export function ProfileScreen({
               </div>
 
               <div>
-                <label className="block text-muted-foreground mb-2">
+                <label className="block text-foreground/80 mb-2 font-medium">
                   Xác nhận mật khẩu mới
                 </label>
                 <Input
@@ -576,7 +576,13 @@ export function ProfileScreen({
                     setNewPassword("");
                     setConfirmNewPassword("");
                   }}
-                  className="flex-1 px-4 py-3 border border-border rounded-lg hover:bg-accent"
+                  className="
+  flex-1 px-4 py-3 rounded-lg
+  border border-border dark:border-gray-600
+  bg-card dark:bg-gray-800/50
+  hover:bg-accent dark:hover:bg-gray-700
+  transition-colors
+"
                 >
                   Hủy
                 </button>
@@ -668,7 +674,10 @@ export function ProfileScreen({
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowBudgetDialog(false)}
-                  className="flex-1 px-4 py-3 border border-border rounded-lg hover:bg-accent"
+                  className="flex-1 px-4 py-3 border border-border rounded-lg dark:border-gray-600
+  bg-card dark:bg-gray-800/50
+  hover:bg-accent dark:hover:bg-gray-700
+  transition-colors"
                 >
                   Hủy
                 </button>

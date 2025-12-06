@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import type { User } from "../App";
 import { toast } from "sonner";
 import { updateProfileApi } from "../utils/api";
+
 interface CompleteProfileScreenProps {
   user: User;
   onComplete: (updatedUser: User) => void;
@@ -24,7 +25,9 @@ export function CompleteProfileScreen({
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(
     user.profilePicture
   );
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const getInitials = (name: string) => {
     if (!name) return "BF";
@@ -52,12 +55,10 @@ export function CompleteProfileScreen({
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
-      setAvatarPreview(reader.result as string);
-    };
+    reader.onload = () => setAvatarPreview(reader.result as string);
     reader.readAsDataURL(file);
   };
-  const [isSaving, setIsSaving] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -69,12 +70,11 @@ export function CompleteProfileScreen({
     try {
       setIsSaving(true);
 
-      // Gửi lên backend
       const res = await updateProfileApi({
         fullName: fullName.trim(),
         phoneNumber: phoneNumber.trim() || undefined,
         bio: bio.trim() || undefined,
-        avatarUrl: avatarPreview, // base64 hoặc URL tùy backend bạn đang xử lý
+        avatarUrl: avatarPreview,
       });
 
       const backendUser = res.user;
@@ -104,50 +104,65 @@ export function CompleteProfileScreen({
   };
 
   return (
-    <div className="w-full px-4 py-6">
+    // nền ngoài: chỉ dùng gradient theo theme (không hardcode xanh/tím)
+    <div className="min-h-screen w-full bg-gradient-to-br from-background via-background/80 to-background flex items-start justify-center px-4 py-6">
       <div className="mx-auto w-full max-w-3xl">
         {/* HEADER TRÊN CÙNG */}
-        <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+        <div className="flex items-center justify-between border-b border-gray-200/70 pb-4 pt-1">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-600">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-primary">
               Thiết lập hồ sơ
             </p>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               Chỉ mất dưới 1 phút – giúp BudgetF hiểu bạn hơn.
             </p>
           </div>
+
           <button
             type="button"
             onClick={onSkip}
-            className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors"
+            className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
             Bỏ qua
           </button>
         </div>
 
-        {/* CARD NỘI DUNG + ANIMATION VÀO MÀN HÌNH */}
+        {/* CARD */}
         <motion.div
           initial={{ opacity: 0, y: 12, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.28, ease: "easeOut" }}
-          className="mt-4 rounded-3xl border border-gray-200 bg-white shadow-lg p-6 space-y-6"
+          className="
+            mt-4 rounded-3xl border border-border bg-card
+            shadow-xl p-6 md:p-8 space-y-6
+          "
         >
-          {/* TIÊU ĐỀ CHÍNH */}
+          {/* TITLE */}
           <div className="text-center space-y-1">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <h1
+              className="
+                text-2xl font-bold
+                bg-gradient-to-r from-primary to-primary/80
+                bg-clip-text text-transparent
+              "
+            >
               Làm quen trước nhé <span>👋</span>
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Thêm vài thông tin cơ bản để BudgetF đồng hành cùng bạn tốt hơn.
             </p>
           </div>
 
-          {/* AVATAR + UPLOAD (CÓ FLOAT ANIMATION) */}
+          {/* AVATAR */}
           <div className="flex flex-col items-center gap-3">
             <motion.button
               type="button"
               onClick={handleAvatarClick}
-              className="relative inline-flex rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white"
+              className="
+                relative inline-flex rounded-full
+                focus:outline-none focus:ring-2 focus:ring-primary
+                focus:ring-offset-2 focus:ring-offset-background
+              "
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.96 }}
               transition={{ type: "spring", stiffness: 260, damping: 18 }}
@@ -160,21 +175,32 @@ export function CompleteProfileScreen({
                   ease: "easeInOut",
                 }}
               >
-                <Avatar className="h-20 w-20 border-4 border-blue-100 bg-blue-500">
+                <Avatar className="h-20 w-20 border-4 border-primary bg-primary shadow-sm">
                   <AvatarImage src={avatarPreview} alt={fullName} />
-                  <AvatarFallback className="bg-blue-500 text-white text-2xl font-semibold">
+                  <AvatarFallback
+                    className="
+                      bg-gradient-to-br from-primary to-primary/70
+                      text-primary-foreground text-2xl font-semibold
+                    "
+                  >
                     {getInitials(fullName || user.fullName)}
                   </AvatarFallback>
                 </Avatar>
               </motion.div>
 
-              {/* ICON CAMERA Ở GIỮA BÊN DƯỚI */}
-              <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-white bg-white shadow-lg">
-                <Camera className="h-4 w-4 text-blue-600" />
+              {/* ICON CAMERA */}
+              <div
+                className="
+                  absolute -bottom-1 -right-1 flex h-8 w-8
+                  items-center justify-center rounded-full
+                  border border-background bg-card shadow-md
+                "
+              >
+                <Camera className="h-4 w-4 text-primary" />
               </div>
             </motion.button>
 
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               Tải lên ảnh đại diện <span className="italic">(tùy chọn)</span>
             </p>
 
@@ -194,18 +220,22 @@ export function CompleteProfileScreen({
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="fullName"
-                  className="text-sm font-medium text-gray-900"
+                  className="text-sm font-medium text-foreground"
                 >
                   Họ và tên
                 </label>
-                <span className="text-xs text-blue-700">Bắt buộc</span>
+                <span className="text-xs text-primary">Bắt buộc</span>
               </div>
+
               <Input
                 id="fullName"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Ví dụ: Nguyễn Văn A"
-                className="h-10 rounded-xl border-gray-200 bg-white text-sm"
+                className="
+                  h-10 rounded-xl border-border bg-background text-sm
+                  focus-visible:ring-primary
+                "
               />
             </div>
 
@@ -213,7 +243,7 @@ export function CompleteProfileScreen({
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
-                className="text-sm font-medium text-gray-900"
+                className="text-sm font-medium text-foreground"
               >
                 Email
               </label>
@@ -221,7 +251,10 @@ export function CompleteProfileScreen({
                 id="email"
                 value={user.email}
                 readOnly
-                className="h-10 rounded-xl border-gray-200 bg-gray-100 text-sm text-gray-600 cursor-not-allowed"
+                className="
+                  h-10 rounded-xl border-border bg-muted text-sm
+                  text-muted-foreground cursor-not-allowed
+                "
               />
             </div>
 
@@ -229,7 +262,7 @@ export function CompleteProfileScreen({
             <div className="space-y-1.5">
               <label
                 htmlFor="phone"
-                className="text-sm font-medium text-gray-900"
+                className="text-sm font-medium text-foreground"
               >
                 Số điện thoại
               </label>
@@ -239,7 +272,10 @@ export function CompleteProfileScreen({
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="Nhập số điện thoại của bạn"
-                className="h-10 rounded-xl border-gray-200 bg-white text-sm"
+                className="
+                  h-10 rounded-xl border-border bg-background text-sm
+                  focus-visible:ring-primary
+                "
               />
             </div>
 
@@ -247,7 +283,7 @@ export function CompleteProfileScreen({
             <div className="space-y-1.5">
               <label
                 htmlFor="bio"
-                className="text-sm font-medium text-gray-900"
+                className="text-sm font-medium text-foreground"
               >
                 Giới thiệu về bạn
               </label>
@@ -257,7 +293,12 @@ export function CompleteProfileScreen({
                 onChange={(e) => setBio(e.target.value)}
                 rows={3}
                 placeholder="Một đoạn giới thiệu ngắn về bản thân và mục tiêu tài chính của bạn..."
-                className="w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="
+                  w-full resize-none rounded-2xl border border-border
+                  bg-muted/40 px-3 py-2 text-sm text-foreground
+                  placeholder:text-muted-foreground
+                  focus:outline-none focus:ring-2 focus:ring-primary
+                "
               />
             </div>
 
@@ -267,16 +308,22 @@ export function CompleteProfileScreen({
                 type="button"
                 variant="outline"
                 onClick={onSkip}
-                className="flex-1 h-11 rounded-2xl border border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="flex-1 h-11 rounded-3xl"
               >
                 Để sau
               </Button>
+
               <Button
                 type="submit"
-                variant="default"
-                className="flex-1 h-11 rounded-2xl bg-gray-900 text-white shadow-lg hover:bg-black"
+                disabled={isSaving}
+                className="
+                  flex-1 h-11 rounded-3xl
+                  bg-gradient-to-br from-primary to-primary/80
+                  text-primary-foreground shadow-lg
+                  hover:opacity-90 transition
+                "
               >
-                Xác nhận
+                {isSaving ? "Đang lưu..." : "Xác nhận"}
               </Button>
             </div>
           </form>

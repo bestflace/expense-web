@@ -369,7 +369,13 @@ export function WalletsScreen({
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 px-4 py-3 border border-border rounded-lg hover:bg-accent"
+                  className="
+  flex-1 px-4 py-3 rounded-lg
+  border border-border dark:border-gray-600
+  bg-card dark:bg-gray-800/50
+  hover:bg-accent dark:hover:bg-gray-700
+  transition-colors
+"
                 >
                   Hủy
                 </button>

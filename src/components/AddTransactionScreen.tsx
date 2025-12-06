@@ -396,7 +396,10 @@ export function AddTransactionScreen({
                   type="button"
                   variant="outline"
                   onClick={onBack}
-                  className="flex-1 h-12 rounded-xl"
+                  className="flex-1 h-12 rounded-xl  border border-border dark:border-gray-600
+  bg-card dark:bg-gray-800/50
+  hover:bg-accent dark:hover:bg-gray-700
+  transition-colors"
                 >
                   Hủy
                 </Button>
@@ -417,11 +420,9 @@ export function AddTransactionScreen({
           {/* Preview Sidebar */}
           <div className="space-y-6">
             {/* Preview */}
-            <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 sticky top-6">
+            <Card className="bg-primary/10 dark:bg-primary/20 border-primary/30 dark:border-primary/50 sticky top-6">
               <CardHeader>
-                <CardTitle className="text-blue-900 dark:text-blue-100">
-                  Xem trước
-                </CardTitle>
+                <CardTitle className="text-primary">Xem trước</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">

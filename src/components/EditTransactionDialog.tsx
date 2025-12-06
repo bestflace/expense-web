@@ -2,6 +2,13 @@ import React, { useState, useEffect, useMemo } from "react";
 import { X, Trash2, Save } from "lucide-react";
 import { Transaction, Category } from "../App";
 import { ConfirmDialog } from "./ConfirmDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 // Chuẩn hóa mọi kiểu string ngày (ISO, v.v.) thành "YYYY-MM-DD" cho <input type="date">
 function toDateInputValue(raw?: string): string {
@@ -153,8 +160,8 @@ export function EditTransactionDialog({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-background border-b border-border p-6 flex items-center justify-between">
+        <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between">
             <h2 className="text-foreground">Chỉnh sửa giao dịch</h2>
             <button
               onClick={onClose}
@@ -167,7 +174,7 @@ export function EditTransactionDialog({
           <div className="p-6 space-y-6">
             {/* Type Selection */}
             <div>
-              <label className="block text-muted-foreground mb-2">
+              <label className="block text-foreground mb-2 font-medium">
                 Loại giao dịch
               </label>
               <div className="grid grid-cols-2 gap-4">
@@ -179,8 +186,8 @@ export function EditTransactionDialog({
                   }}
                   className={`p-4 rounded-lg border-2 transition-colors ${
                     type === "income"
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                      : "border-border hover:border-green-300"
+                      ? "border-primary bg-primary/10 dark:bg-primary/20"
+                      : "border-white border-opacity-30 dark:border-white dark:border-opacity-30 bg-background/30 hover:bg-background/50"
                   }`}
                 >
                   <div className="text-2xl mb-2">💰</div>
@@ -194,8 +201,8 @@ export function EditTransactionDialog({
                   }}
                   className={`p-4 rounded-lg border-2 transition-colors ${
                     type === "expense"
-                      ? "border-red-500 bg-red-50 dark:bg-red-900/20"
-                      : "border-border hover:border-red-300"
+                      ? "border-primary bg-primary/10 dark:bg-primary/20"
+                      : "border-white border-opacity-30 dark:border-white dark:border-opacity-30 bg-background/30 hover:bg-background/50"
                   }`}
                 >
                   <div className="text-2xl mb-2">💸</div>
@@ -205,70 +212,98 @@ export function EditTransactionDialog({
             </div>
 
             {/* Category Selection */}
+            {/* Category Selection */}
             <div>
-              <label className="block text-muted-foreground mb-2">
+              <label className="block text-foreground mb-2 font-medium">
                 Danh mục
               </label>
-              <select
-                value={category}
-                onChange={(e) => {
-                  setCategory(e.target.value);
+
+              <Select
+                value={category || "none"}
+                onValueChange={(val) => {
+                  setCategory(val === "none" ? "" : val);
                   setSubcategory("");
                 }}
-                className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
               >
-                <option value="">Chọn danh mục</option>
-                {filteredCategories.map((cat) => (
-                  <option key={cat.id} value={cat.name}>
-                    {cat.icon} {cat.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full h-12 rounded-lg bg-background border border-border text-foreground focus:ring-2 focus:ring-primary/30 focus:border-primary/60">
+                  <SelectValue placeholder="Chọn danh mục" />
+                </SelectTrigger>
+
+                <SelectContent className="bg-card border border-slate-700/60 text-foreground">
+                  <SelectItem value="none">Chọn danh mục</SelectItem>
+
+                  {filteredCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.icon} {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Subcategory Selection */}
             {subcategories.length > 0 && (
               <div>
-                <label className="block text-muted-foreground mb-2">
+                <label className="block text-foreground mb-2 font-medium">
                   Danh mục con
                 </label>
-                <select
-                  value={subcategory}
-                  onChange={(e) => setSubcategory(e.target.value)}
-                  className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
+
+                <Select
+                  value={subcategory || "none"}
+                  onValueChange={(val) =>
+                    setSubcategory(val === "none" ? "" : val)
+                  }
                 >
-                  <option value="">Không có danh mục con</option>
-                  {subcategories.map((sub) => (
-                    <option key={sub.id} value={sub.name}>
-                      {sub.icon} {sub.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full h-12 rounded-lg bg-background border border-border text-foreground focus:ring-2 focus:ring-primary/30 focus:border-primary/60">
+                    <SelectValue placeholder="Không có danh mục con" />
+                  </SelectTrigger>
+
+                  <SelectContent className="bg-card border border-slate-700/60 text-foreground">
+                    <SelectItem value="none">Không có danh mục con</SelectItem>
+
+                    {subcategories.map((sub) => (
+                      <SelectItem key={sub.id} value={sub.name}>
+                        {sub.icon} {sub.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
             {/* Wallet Selection */}
             {wallets.length > 0 && (
               <div>
-                <label className="block text-muted-foreground mb-2">Ví</label>
-                <select
-                  value={walletId}
-                  onChange={(e) => setWalletId(e.target.value)}
-                  className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
+                <label className="block text-foreground mb-2 font-medium">
+                  Ví
+                </label>
+
+                <Select
+                  value={walletId || "none"}
+                  onValueChange={(val) =>
+                    setWalletId(val === "none" ? "" : val)
+                  }
                 >
-                  <option value="">Chọn ví</option>
-                  {wallets.map((wallet) => (
-                    <option key={wallet.id} value={wallet.id}>
-                      {wallet.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full h-12 rounded-lg bg-background border border-border text-foreground focus:ring-2 focus:ring-primary/30 focus:border-primary/60">
+                    <SelectValue placeholder="Chọn ví" />
+                  </SelectTrigger>
+
+                  <SelectContent className="bg-card border border-slate-700/60 text-foreground">
+                    <SelectItem value="none">Chọn ví</SelectItem>
+
+                    {wallets.map((wallet) => (
+                      <SelectItem key={wallet.id} value={wallet.id}>
+                        {wallet.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
             {/* Amount */}
             <div>
-              <label className="block text-muted-foreground mb-2">
+              <label className="block text-foreground mb-2 font-medium">
                 Số tiền (₫)
               </label>
               <input
@@ -278,30 +313,43 @@ export function EditTransactionDialog({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
-                className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
+                className="w-full h-12 rounded-lg border border-input bg-input-background px-3 py-2 text-sm text-foreground 
+           dark:bg-input/30 dark:hover:bg-input/50 
+           focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 
+           outline-none transition"
               />
             </div>
 
             {/* Date */}
             <div>
-              <label className="block text-muted-foreground mb-2">Ngày</label>
+              <label className="block text-foreground mb-2 font-medium">
+                Ngày
+              </label>
               <input
                 type="date"
                 value={date || ""}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
+                className="w-full h-12 rounded-lg border border-input bg-input-background px-3 py-2 text-sm text-foreground 
+           dark:bg-input/30 dark:hover:bg-input/50 
+           focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 
+           outline-none transition"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-muted-foreground mb-2">Mô tả</label>
+              <label className="block text-foreground mb-2 font-medium">
+                Mô tả
+              </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Nhập mô tả..."
                 rows={3}
-                className="w-full p-3 border border-border rounded-lg bg-background text-foreground resize-none"
+                className="w-full min-h-[96px] rounded-lg border border-input bg-input-background px-3 py-2 text-sm text-foreground resize-none
+           dark:bg-input/30 dark:hover:bg-input/50
+           focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50
+           outline-none transition"
               />
             </div>
 

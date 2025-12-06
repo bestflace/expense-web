@@ -294,11 +294,9 @@ export function AddCategoryModal({
             </div>
 
             {/* Preview */}
-            <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+            <Card className="bg-primary/10 dark:bg-primary/20 border-primary/30 dark:border-primary/50">
               <CardContent className="p-4">
-                <Label className="text-blue-900 dark:text-blue-100 mb-2 block">
-                  Xem trước
-                </Label>
+                <Label className="text-foreground mb-2 block">Xem trước</Label>
                 <div className="flex items-center space-x-3">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white"
