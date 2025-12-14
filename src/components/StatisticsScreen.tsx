@@ -30,12 +30,13 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import type { Transaction, Category } from "../App";
+import type { Transaction, Category, Wallet } from "../App";
 import { toast } from "sonner";
 
 interface StatisticsScreenProps {
   transactions: Transaction[];
   categories: Category[];
+  wallets: Wallet[];
   totalIncome: number;
   totalExpenses: number;
   balance: number;
@@ -47,6 +48,7 @@ export function StatisticsScreen({
   totalIncome,
   totalExpenses,
   balance,
+  wallets,
 }: StatisticsScreenProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -363,6 +365,69 @@ export function StatisticsScreen({
 
     toast.success("Đã xuất file Excel thành công!");
   };
+
+  const walletRows = useMemo(() => {
+    const agg = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        icon: string;
+        color: string;
+        start: number;
+        income: number;
+        expense: number;
+        net: number;
+        end: number;
+      }
+    >();
+
+    // 1) init tất cả ví => ví chưa có giao dịch vẫn hiện
+    wallets.forEach((w) => {
+      const start = Number(w.balance || 0);
+      agg.set(w.id, {
+        id: w.id,
+        name: w.name,
+        icon: w.icon || "💳",
+        color: w.color || "#64748b",
+        start,
+        income: 0,
+        expense: 0,
+        net: 0,
+        end: start,
+      });
+    });
+
+    // 2) cộng giao dịch theo filter hiện tại
+    filteredTransactions.forEach((t) => {
+      if (!t.walletId) return;
+      const row = agg.get(t.walletId);
+      if (!row) return;
+
+      const amount = Number(t.amount || 0);
+      if (t.type === "income") row.income += amount;
+      else row.expense += amount;
+
+      row.net = row.income - row.expense;
+      row.end = row.start + row.net;
+    });
+
+    const rows = Array.from(agg.values());
+
+    // tổng chi để tính "tỷ lệ chi" theo tổng chi toàn bộ ví
+    const totalExpense = rows.reduce((s, r) => s + r.expense, 0);
+
+    return (
+      rows
+        .map((r) => ({
+          ...r,
+          expensePct:
+            totalExpense > 0 ? Math.round((r.expense / totalExpense) * 100) : 0,
+        }))
+        // sắp xếp: ví có chi nhiều lên trước, ví không giao dịch xuống cuối
+        .sort((a, b) => b.expense - a.expense || b.net - a.net)
+    );
+  }, [wallets, filteredTransactions]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -805,6 +870,158 @@ export function StatisticsScreen({
                       Không có dữ liệu giao dịch
                     </div>
                   )}
+              </div>
+            </CardContent>
+          </Card>
+          {/* Wallet Summary */}
+          <Card className="border border-border/60 bg-card">
+            <CardHeader className="pb-0">
+              <CardTitle className="text-lg md:text-xl">
+                Tóm tắt giao dịch theo ví
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="pt-1">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="py-3 px-4 text-left font-semibold text-gray-900 dark:text-white">
+                        Ví
+                      </th>
+                      <th className="py-3 px-4 text-right font-semibold text-gray-900 dark:text-white">
+                        Số dư đầu
+                      </th>
+                      <th className="py-3 px-4 text-right font-semibold text-gray-900 dark:text-white">
+                        Số dư cuối
+                      </th>
+                      <th className="py-3 px-4 text-right font-semibold text-gray-900 dark:text-white">
+                        Tăng / giảm
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {walletRows.map((w) => {
+                      const net = w.net;
+                      const isPos = net >= 0;
+
+                      return (
+                        <tr
+                          key={w.id}
+                          className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                        >
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              {/* Avatar tròn giống danh mục */}
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-white"
+                                style={{ backgroundColor: w.color }}
+                              >
+                                <span className="text-base leading-none">
+                                  {w.icon}
+                                </span>
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="text-gray-900 dark:text-white font-medium truncate">
+                                  {w.name}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  Thu {formatAmount(w.income)} • Chi{" "}
+                                  {formatAmount(w.expense)}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-4 text-right text-gray-900 dark:text-white font-normal">
+                            {formatAmount(w.start)}
+                          </td>
+
+                          <td className="py-3 px-4 text-right text-gray-900 dark:text-white font-normal">
+                            {formatAmount(w.end)}
+                          </td>
+
+                          <td className="py-3 px-4 text-right font-normal">
+                            <span
+                              className={
+                                isPos
+                                  ? "text-green-600 dark:text-green-400"
+                                  : "text-red-600 dark:text-red-400"
+                              }
+                            >
+                              {isPos ? "▲" : "▼"} {formatAmount(Math.abs(net))}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {/* Dòng tổng giống tóm tắt theo danh mục */}
+                    <tr className="border-t-2 border-gray-300 dark:border-gray-600">
+                      {(() => {
+                        const totalStart = walletRows.reduce(
+                          (s, r) => s + r.start,
+                          0
+                        );
+                        const totalEnd = walletRows.reduce(
+                          (s, r) => s + r.end,
+                          0
+                        );
+                        const totalNet = totalEnd - totalStart;
+                        const totalExpense = walletRows.reduce(
+                          (s, r) => s + r.expense,
+                          0
+                        );
+                        const totalIncome = walletRows.reduce(
+                          (s, r) => s + r.income,
+                          0
+                        );
+
+                        return (
+                          <>
+                            <td className="py-3 px-4 text-gray-900 dark:text-white font-semibold">
+                              Tổng số dư
+                            </td>
+
+                            <td className="py-3 px-4 text-right text-gray-900 dark:text-white font-semibold">
+                              {formatAmount(totalStart)}
+                            </td>
+
+                            <td className="py-3 px-4 text-right text-gray-900 dark:text-white font-semibold">
+                              {formatAmount(totalEnd)}
+                            </td>
+
+                            <td className="py-3 px-4 text-right font-semibold">
+                              <span
+                                className={
+                                  totalNet >= 0
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-red-600 dark:text-red-400"
+                                }
+                              >
+                                {totalNet >= 0 ? "▲" : "▼"}{" "}
+                                {formatAmount(Math.abs(totalNet))}
+                              </span>
+                            </td>
+                          </>
+                        );
+                      })()}
+                    </tr>
+
+                    {walletRows.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="py-8 text-center text-gray-500 dark:text-gray-400"
+                        >
+                          Không có dữ liệu ví
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>

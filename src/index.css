@@ -4647,3 +4647,260 @@ html {
   object-position: center !important;
   display: block;
 }
+/* ===== Wallet summary UI ===== */
+.wallet-card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
+}
+
+.dark .wallet-card {
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+}
+
+.wallet-chip {
+  background: color-mix(in oklab, var(--muted) 70%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  border-radius: 9999px;
+  padding: 0.5rem 0.75rem;
+}
+
+.wallet-row {
+  border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  transition: background 0.15s ease;
+}
+
+.wallet-row:hover {
+  background: color-mix(in oklab, var(--accent) 45%, transparent);
+}
+
+.wallet-badge {
+  border-radius: 9999px;
+  padding: 0.25rem 0.6rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+}
+
+.wallet-badge.pos {
+  background: color-mix(in oklab, var(--chart-1) 18%, transparent);
+  color: color-mix(in oklab, var(--chart-1) 70%, var(--foreground));
+}
+
+.wallet-badge.neg {
+  background: color-mix(in oklab, var(--destructive) 16%, transparent);
+  color: color-mix(in oklab, var(--destructive) 80%, var(--foreground));
+}
+
+.wallet-bar {
+  height: 8px;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--muted) 80%, transparent);
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+}
+
+.wallet-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--primary) 80%, white),
+    color-mix(in oklab, var(--chart-2) 70%, white)
+  );
+}
+/* ===== Budget progress card (match BudgetF UI) ===== */
+/* ================================
+   Budget progress card (BudgetF)
+   ================================ */
+
+.bf-budget-card {
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--card) 92%, transparent),
+    color-mix(in oklab, var(--card) 84%, transparent)
+  );
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.dark .bf-budget-card {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--card) 92%, transparent),
+    color-mix(in oklab, var(--card) 82%, transparent)
+  );
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+.bf-budget-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bf-budget-kicker {
+  font-size: 12px;
+  color: color-mix(in oklab, var(--muted-foreground) 90%, transparent);
+}
+
+.bf-budget-title {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.bf-budget-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: color-mix(in oklab, var(--muted-foreground) 88%, transparent);
+}
+
+/* badge status */
+.bf-budget-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  background: color-mix(in oklab, var(--card) 75%, transparent);
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+.bf-budget-badge.ok {
+  color: color-mix(in oklab, var(--chart-1) 70%, var(--foreground));
+  border-color: color-mix(in oklab, var(--chart-1) 35%, var(--border));
+}
+
+.bf-budget-badge.warn {
+  color: #f59e0b;
+  border-color: color-mix(in oklab, #f59e0b 35%, var(--border));
+}
+
+.bf-budget-badge.danger {
+  color: color-mix(in oklab, var(--destructive) 85%, var(--foreground));
+  border-color: color-mix(in oklab, var(--destructive) 35%, var(--border));
+}
+
+/* wrapper để đặt mốc (mark) mà không bị cắt */
+.bf-budget-barWrap {
+  position: relative;
+  margin-top: 12px;
+}
+
+/* track */
+.bf-budget-bar {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden; /* chỉ cắt phần fill, không cắt mark vì mark nằm ngoài bar */
+  background: color-mix(in oklab, var(--muted) 75%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 65%, transparent);
+}
+
+/* fill */
+.bf-budget-bar > span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  transition: width 450ms ease;
+}
+
+.bf-budget-bar > span.ok {
+  background: linear-gradient(
+    90deg,
+    var(--chart-1),
+    color-mix(in oklab, var(--primary) 70%, var(--chart-1))
+  );
+}
+
+.bf-budget-bar > span.warn {
+  background: linear-gradient(90deg, #fbbf24, #f97316);
+}
+
+.bf-budget-bar > span.danger {
+  background: linear-gradient(90deg, var(--destructive), #fb7185);
+}
+
+/* ===== Mark (mốc cảnh báo) ===== */
+.bf-budget-mark {
+  position: absolute;
+  top: -18px; /* nhô lên trên thanh */
+  height: 46px; /* đủ chứa label + line */
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* pill label của mốc */
+.bf-budget-mark-label {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  background: color-mix(in oklab, var(--card) 75%, transparent);
+  color: color-mix(in oklab, var(--muted-foreground) 95%, var(--foreground));
+  white-space: nowrap;
+}
+
+/* line */
+.bf-budget-mark-line {
+  position: absolute;
+  top: 18px; /* bắt đầu dưới label */
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: color-mix(in oklab, var(--foreground) 40%, transparent);
+  border-radius: 999px;
+}
+
+/* dot */
+.bf-budget-mark-dot {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 12px;
+  height: 12px;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: var(--card);
+  border: 2px solid color-mix(in oklab, var(--primary) 70%, var(--foreground));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* metrics */
+.bf-budget-metrics {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.bf-budget-metrics .label {
+  font-size: 12px;
+  color: color-mix(in oklab, var(--muted-foreground) 90%, transparent);
+}
+
+.bf-budget-metrics .value {
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.bf-budget-metrics .right {
+  text-align: right;
+}

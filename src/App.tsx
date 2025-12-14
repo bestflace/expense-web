@@ -1269,6 +1269,7 @@ export default function App() {
           <StatisticsScreen
             transactions={transactions}
             categories={categories}
+            wallets={wallets}
             totalIncome={totalIncome}
             totalExpenses={totalExpenses}
             balance={balance}

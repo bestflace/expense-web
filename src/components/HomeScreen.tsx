@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Card, CardContent } from "./ui/card";
+import { Card, CardContent, CardHeader } from "./ui/card";
 import type { User, Transaction, Category, Budget } from "../App";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -557,7 +557,24 @@ export function HomeScreen({
       day: "numeric",
     });
   };
+  // pct + status (đặt ở đầu component, trước return)
+  const usedPctRaw =
+    budget.monthlyLimit > 0 ? (monthlyExpenses / budget.monthlyLimit) * 100 : 0;
 
+  const usedPct = Math.min(100, Math.max(0, usedPctRaw)); // để vẽ thanh
+  const thresholdPct = Math.min(100, Math.max(0, budget.warningThreshold)); // để vẽ mốc
+
+  const status =
+    budget.monthlyLimit <= 0
+      ? "ok"
+      : usedPctRaw >= 100
+      ? "danger"
+      : usedPctRaw >= budget.warningThreshold && budget.warningThreshold < 100
+      ? "warn"
+      : "ok";
+
+  const statusText =
+    status === "danger" ? "Vượt" : status === "warn" ? "Sắp chạm" : "Ổn";
   return (
     <div className="h-full bg-background text-foreground">
       <div className="container mx-auto px-6 py-8 max-w-7xl">
@@ -705,6 +722,85 @@ export function HomeScreen({
               </Card>
             </motion.div>
           </div>
+        </motion.div>
+        {/* Budget Progress Card - đặt ngay trên thanh tìm kiếm */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="mb-4"
+        >
+          {/* Budget progress card (Card-based) */}
+          <Card className="bf-budget-card mb-4 border-0">
+            <CardHeader className="p-0">
+              <div className="bf-budget-top">
+                <div>
+                  <div className="bf-budget-kicker">
+                    Tiến trình ngân sách tháng
+                  </div>
+
+                  <div className="bf-budget-title">
+                    {budget.monthlyLimit > 0
+                      ? `Đã dùng ${usedPct.toFixed(0)}%`
+                      : "Chưa đặt ngân sách"}
+                  </div>
+
+                  {budget.monthlyLimit > 0 && (
+                    <div className="bf-budget-sub">
+                      Cảnh báo khi đạt {budget.warningThreshold}%
+                    </div>
+                  )}
+                </div>
+
+                {budget.monthlyLimit > 0 && (
+                  <div className={`bf-budget-badge ${status}`}>
+                    {statusText}
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+
+            {budget.monthlyLimit > 0 && (
+              <CardContent className="p-0">
+                <div className="bf-budget-bar relative">
+                  {/* thanh đã dùng */}
+                  <span className={status} style={{ width: `${usedPct}%` }} />
+
+                  {/* mốc cảnh báo */}
+                  <div
+                    className="bf-budget-mark"
+                    style={{ left: `${thresholdPct}%` }}
+                  >
+                    <span className="bf-budget-mark-line" />
+                    <span
+                      className="bf-budget-mark-dot"
+                      title={`Mốc ${thresholdPct}%`}
+                    />
+                  </div>
+                </div>
+
+                <div className="bf-budget-metrics">
+                  <div>
+                    <div className="label">Đã chi</div>
+                    <div className="value">
+                      {monthlyExpenses.toLocaleString("vi-VN")}₫
+                    </div>
+                  </div>
+
+                  <div className="right">
+                    <div className="label">Còn lại</div>
+                    <div className="value">
+                      {Math.max(
+                        0,
+                        budget.monthlyLimit - monthlyExpenses
+                      ).toLocaleString("vi-VN")}
+                      ₫
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            )}
+          </Card>
         </motion.div>
 
         {/* Content Grid */}
