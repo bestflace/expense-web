@@ -786,12 +786,21 @@ export function HomeScreen({
                           exit={{ opacity: 0, x: 20 }}
                           transition={{ duration: 0.3, delay: index * 0.05 }}
                           whileHover={{ scale: 1.02, x: 5 }}
-                          className="flex items-center space-x-4 p-4 bg-gradient-to-r from-gray-50 to-blue-50/50 dark:from-gray-700 dark:to-gray-800 rounded-xl cursor-pointer transition-all shadow-sm hover:shadow-md"
+                          className="
+  tx-item
+  flex items-center space-x-4 p-4 rounded-xl cursor-pointer transition-all
+  shadow-sm hover:shadow-md
+  border border-gray-200/70 dark:border-gray-700/50
+"
                           onClick={() => onEditTransaction(transaction)}
                         >
                           <motion.div
-                            whileHover={{ rotate: 360 }}
-                            transition={{ duration: 0.5 }}
+                            whileHover={{ scale: 1.06, y: -1 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 18,
+                            }}
                             className="w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-md"
                             style={{
                               backgroundColor: getCategoryColor(

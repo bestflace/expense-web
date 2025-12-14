@@ -187,7 +187,7 @@ export function WalletsScreen({
               placeholder="Tìm kiếm ví theo tên hoặc mô tả..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12"
+              className="pl-12 h-12 bg-white dark:bg-gray-800 border-0 shadow-md focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-0"
             />
           </div>
         </div>

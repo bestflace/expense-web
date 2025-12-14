@@ -125,8 +125,6 @@ src/
     StatisticsScreen.tsx
     WalletsScreen.tsx
     ... (các UI component khác)
-  styles/
-    globals.css
   utils/
     ...
   App.tsx

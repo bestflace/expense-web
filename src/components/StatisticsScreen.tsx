@@ -365,7 +365,7 @@ export function StatisticsScreen({
   };
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">

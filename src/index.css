@@ -4129,7 +4129,8 @@
   --radius: 0.75rem;
 }
 .dark {
-  --background: #020617; /* nền app – rất tối */
+  --background: #091315;
+
   --foreground: #e5f2ff; /* chữ sáng */
 
   --card: oklch(0.278 0.033 256.848);
@@ -4627,4 +4628,15 @@ html {
     transform: translateY(-3px);
     opacity: 1;
   }
+}
+.tx-item {
+  background: linear-gradient(90deg, #ffffff 0%, #eff6ff 45%, #eef2ff 100%);
+}
+
+.dark .tx-item {
+  background: linear-gradient(
+    90deg,
+    rgba(55, 65, 81, 1) 0%,
+    rgba(31, 41, 55, 1) 100%
+  );
 }
