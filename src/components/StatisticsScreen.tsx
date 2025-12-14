@@ -574,7 +574,9 @@ export function StatisticsScreen({
             {/* Expense Categories Pie Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Phân bổ chi tiêu</CardTitle>
+                <CardTitle className="text-base md:text-lg font-normal">
+                  Phân bổ chi tiêu
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {pieExpenseData.length > 0 ? (
@@ -612,7 +614,9 @@ export function StatisticsScreen({
             {/* Income Categories Pie Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Phân bổ thu nhập</CardTitle>
+                <CardTitle className="text-base md:text-lg font-normal">
+                  Phân bổ thu nhập
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {pieIncomeData.length > 0 ? (
@@ -651,7 +655,7 @@ export function StatisticsScreen({
           {/* Monthly Comparison Bar Chart */}
           <Card>
             <CardHeader>
-              <CardTitle>
+              <CardTitle className="text-base md:text-lg font-normal">
                 So sánh thu chi theo tháng - Năm {selectedYear}
               </CardTitle>
             </CardHeader>
@@ -680,7 +684,9 @@ export function StatisticsScreen({
           {/* Transaction Summary Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Tóm tắt giao dịch theo danh mục</CardTitle>
+              <CardTitle className="text-base md:text-lg font-normal">
+                Tóm tắt giao dịch theo danh mục
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-8">
@@ -876,7 +882,7 @@ export function StatisticsScreen({
           {/* Wallet Summary */}
           <Card className="border border-border/60 bg-card">
             <CardHeader className="pb-0">
-              <CardTitle className="text-lg md:text-xl">
+              <CardTitle className="text-base md:text-lg font-normal">
                 Tóm tắt giao dịch theo ví
               </CardTitle>
             </CardHeader>
